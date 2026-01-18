@@ -4,16 +4,34 @@ Welcome to your personal productivity journal! This app helps you track your dai
 
 ## What This App Does
 
-- **Daily Journal Prompts**: Every day, you can fill in 4 sections:
-  - **Focus for Today**: Your main priorities
-  - **Insights for Current Projects**: What you've learned
-  - **Sparks for Future Projects**: New ideas
-  - **Roadblocks**: Challenges you're facing
+- **Daily Journal with 4 Sections**:
+  - **Focus for Today**: Add multiple focus items for your priorities
+  - **Insights for Current Projects**: Capture learnings and realizations
+  - **Sparks for Future Projects**: Document new ideas and opportunities
+  - **Roadblocks**: Track challenges and obstacles
 
-- **Smart Tagging**: Tag each entry with topics like Career, Health, Goals, etc.
-- **Tag Suggestions**: The app suggests relevant tags based on what you write
-- **Search**: Find past entries by filtering by tags
-- **Weekly Recap**: See a summary of your week's themes and activities
+- **Multiple Items Per Section**: Add as many items as you want in each section throughout the day
+
+- **Reopen & Edit Journals**: Come back to any journal entry throughout the day to add more items
+
+- **Three-Tier Tagging System**:
+  - **Domain Tags** (Required - one per item):
+    - #current-project, #team-project, #process-improvement, #future-idea, #people-leadership, #career-strategy, #risk-or-theme
+  - **Strategic Career Tags** (Optional - zero or more per item):
+    - #director-path, #methodology, #QA-review, #audit-analytics, #talent-development
+  - **Project Tags** (Optional - create your own):
+    - Add custom project tags like #project-alpha, #initiative-x, etc.
+
+- **Tag Validation**: Ensures each item has a required domain tag before saving
+
+- **Advanced Search**: Filter journal entries by any combination of domain, career, or project tags
+
+- **Weekly Recap**: See your week's focus areas with breakdowns by:
+  - Domain distribution
+  - Career focus areas
+  - Active projects
+  - Top themes overall
+
 - **Works Everywhere**: Access from your phone or laptop's web browser
 
 ## For Complete Beginners: What You Need
@@ -71,26 +89,40 @@ Dependencies are like building blocks that the app needs to work.
 
 1. The app opens to the "Daily Journal" page
 2. Today's date is already filled in
-3. Fill in any or all of the 4 sections:
-   - Type your thoughts in the text boxes
-   - Click the tag buttons below each section to add tags
-4. Click "Suggest Tags" to get smart tag recommendations
-5. Click "Save Journal" when done
+3. **Add items to any section** (Focus, Insights, Sparks, Roadblocks):
+   - Click "+ Add Focus Item" (or similar for other sections)
+   - Type your thoughts in the text box
+   - **Select exactly ONE domain tag** (required - shows as blue)
+   - Optionally select career tags (purple) and/or project tags (green)
+   - Repeat to add more items
+4. Click "Save Journal" when done
+5. **Reopen anytime**: Select the same date to add more items throughout the day!
+
+#### Managing Project Tags
+
+1. Click "Manage Project Tags" at the top
+2. Type a new project tag name (e.g., "project-alpha")
+3. Click "Add Tag"
+4. Your new tag is now available when journaling
+5. Delete tags you no longer need by clicking the × button
 
 #### Searching Your Journals
 
 1. Click "Search" at the top
-2. Click on tag buttons to filter your journals
-3. All journals with those tags will appear
-4. Click "Clear filters" to see all journals again
+2. Filter by domain tags (blue), career tags (purple), or project tags (green)
+3. Select multiple tags to narrow results
+4. All matching journal entries will appear with individual items and their tags
+5. Click "Clear all filters" to reset
 
 #### Viewing Your Weekly Recap
 
 1. Click "Weekly Recap" at the top
-2. See a summary of:
+2. See a comprehensive summary:
    - How many entries you made this week
-   - Your top themes (most-used tags)
-   - All your focus areas, insights, ideas, and challenges
+   - Top themes overall
+   - Domain distribution (what types of work you focused on)
+   - Career focus areas (strategic goals)
+   - Active projects
 
 ## Where Is My Data Stored?
 
@@ -108,19 +140,35 @@ Right now, if you use the app on your phone and laptop, they'll have separate jo
 
 ## Customizing Your Tags
 
-You can customize the master tag list by editing the code:
+### Project Tags (Easy - No Code)
+
+Create and manage project tags directly in the app:
+1. Click "Manage Project Tags"
+2. Add or delete tags as needed
+3. Changes save automatically
+
+### Domain & Career Tags (Requires Code Editing)
+
+To change the fixed domain or career tags:
 
 1. Open `src/App.jsx` in any text editor
-2. Find this line near the top (around line 4):
+2. Find the tag definitions near the top (around lines 5-21):
    ```javascript
-   const MASTER_TAGS = [
-     'Career', 'Personal', 'Health', 'Finance', 'Learning',
+   const DOMAIN_TAGS = [
+     'current-project',
+     'team-project',
+     // ... more tags
+   ]
+
+   const CAREER_TAGS = [
+     'director-path',
+     'methodology',
      // ... more tags
    ]
    ```
-3. Add, remove, or change tags in the list
+3. Add, remove, or change tags in the arrays
 4. Save the file
-5. The app will automatically update
+5. The app will automatically reload with your changes
 
 ## Troubleshooting
 
