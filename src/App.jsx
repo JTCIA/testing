@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns'
+import ReactMarkdown from 'react-markdown'
 
 // Three tag buckets
 const DOMAIN_TAGS = [
@@ -1299,8 +1300,8 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                           Delete
                         </button>
                       </div>
-                      <div className="prose prose-sm max-w-none">
-                        <div className="whitespace-pre-wrap text-gray-700">{summary.summary}</div>
+                      <div className="prose prose-sm max-w-none text-gray-700">
+                        <ReactMarkdown>{summary.summary}</ReactMarkdown>
                       </div>
                     </div>
                   ))}
