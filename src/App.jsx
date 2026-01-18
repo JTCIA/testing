@@ -37,11 +37,52 @@ function App() {
   const [searchTags, setSearchTags] = useState([])
   const [newProjectTag, setNewProjectTag] = useState('')
 
+  // Helper to convert old format data to new format
+  const convertToNewFormat = (data) => {
+    if (!data) return []
+    if (Array.isArray(data)) return data
+    // Old format: single string - convert to array with one item
+    if (typeof data === 'string' && data.trim()) {
+      return [{
+        id: generateId(),
+        text: data,
+        domainTag: null,
+        careerTags: [],
+        projectTags: []
+      }]
+    }
+    return []
+  }
+
   // Load data from local storage
   useEffect(() => {
     const savedJournals = localStorage.getItem('productivityJournals')
     if (savedJournals) {
-      setJournals(JSON.parse(savedJournals))
+      const parsedJournals = JSON.parse(savedJournals)
+
+      // Migrate old format to new format
+      const migratedJournals = parsedJournals.map(journal => {
+        const needsMigration =
+          (journal.focus && !Array.isArray(journal.focus)) ||
+          (journal.insights && !Array.isArray(journal.insights)) ||
+          (journal.sparks && !Array.isArray(journal.sparks)) ||
+          (journal.roadblocks && !Array.isArray(journal.roadblocks))
+
+        if (needsMigration) {
+          return {
+            ...journal,
+            focus: convertToNewFormat(journal.focus),
+            insights: convertToNewFormat(journal.insights),
+            sparks: convertToNewFormat(journal.sparks),
+            roadblocks: convertToNewFormat(journal.roadblocks)
+          }
+        }
+        return journal
+      })
+
+      setJournals(migratedJournals)
+      // Save migrated data back to localStorage
+      localStorage.setItem('productivityJournals', JSON.stringify(migratedJournals))
     }
 
     const savedProjectTags = localStorage.getItem('projectTags')
@@ -69,10 +110,10 @@ function App() {
     const existingJournal = journals.find(j => j.date === currentDate)
     if (existingJournal) {
       setCurrentJournal({
-        focus: existingJournal.focus || [],
-        insights: existingJournal.insights || [],
-        sparks: existingJournal.sparks || [],
-        roadblocks: existingJournal.roadblocks || []
+        focus: convertToNewFormat(existingJournal.focus),
+        insights: convertToNewFormat(existingJournal.insights),
+        sparks: convertToNewFormat(existingJournal.sparks),
+        roadblocks: convertToNewFormat(existingJournal.roadblocks)
       })
     } else {
       setCurrentJournal({
