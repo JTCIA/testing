@@ -35,10 +35,11 @@ const ItemEditor = ({
   toggleItemCareerTag,
   toggleItemProjectTag,
   deleteItem,
-  suggestTagsForItem
+  suggestTagsForItem,
+  addProjectTag
 }) => {
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [suggestions, setSuggestions] = useState({ domain: [], career: [], project: [] })
+  const [suggestions, setSuggestions] = useState({ domain: [], career: [], project: [], newProjectTags: [] })
 
   const sectionLabels = {
     focus: 'Focus Item',
@@ -141,7 +142,7 @@ const ItemEditor = ({
                 </div>
               )}
               {suggestions.project.length > 0 && (
-                <div>
+                <div className="mb-2">
                   <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Project Tags:</p>
                   <div className="flex flex-wrap gap-1">
                     {suggestions.project.map(tag => (
@@ -156,8 +157,33 @@ const ItemEditor = ({
                   </div>
                 </div>
               )}
-              {suggestions.domain.length === 0 && suggestions.career.length === 0 && suggestions.project.length === 0 && (
-                <p className="text-xs text-gray-600">No tag suggestions found for this text.</p>
+              {suggestions.newProjectTags && suggestions.newProjectTags.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-purple-900 mb-1">💡 Create New Project Tags:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {suggestions.newProjectTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => {
+                          addProjectTag(tag)
+                          // Auto-apply the tag after creating it
+                          setTimeout(() => {
+                            if (!item.projectTags?.includes(tag)) {
+                              applySuggestion('project', tag)
+                            }
+                          }, 100)
+                        }}
+                        className="px-2 py-1 bg-yellow-500 text-white rounded-full text-xs hover:bg-yellow-600 flex items-center gap-1"
+                      >
+                        <span>✨ Create #{tag}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1 italic">These tags don't exist yet - click to create and apply them</p>
+                </div>
+              )}
+              {suggestions.domain.length === 0 && suggestions.career.length === 0 && suggestions.project.length === 0 && suggestions.newProjectTags.length === 0 && (
+                <p className="text-xs text-gray-600">No tag suggestions found. The app will learn from your tagging patterns over time!</p>
               )}
             </div>
           )}
@@ -430,10 +456,15 @@ function App() {
   }
 
   // Add new project tag
-  const addProjectTag = () => {
-    if (newProjectTag.trim() && !projectTags.includes(newProjectTag.trim())) {
-      setProjectTags(prev => [...prev, newProjectTag.trim()])
-      setNewProjectTag('')
+  const addProjectTag = (tagToAdd) => {
+    // If called with a parameter (from suggestions), use that; otherwise use the state
+    const tag = tagToAdd || newProjectTag
+    if (tag.trim() && !projectTags.includes(tag.trim())) {
+      setProjectTags(prev => [...prev, tag.trim()])
+      if (!tagToAdd) {
+        // Only clear the input if it was added from the manual input field
+        setNewProjectTag('')
+      }
     }
   }
 
@@ -459,54 +490,196 @@ function App() {
     return errors
   }
 
-  // Suggest tags for an item based on its text
+  // Extract words from text (filtering common stop words)
+  const extractWords = (text) => {
+    const stopWords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has',
+      'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may',
+      'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he',
+      'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our',
+      'their', 'me', 'him', 'them', 'us', 'am', 'from', 'as', 'by', 'about'
+    ])
+
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ') // Remove punctuation
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !stopWords.has(word))
+  }
+
+  // Learn word patterns from historical journal entries for each tag
+  const learnTagPatterns = () => {
+    const tagPatterns = {
+      domain: {},
+      career: {}
+    }
+
+    // Initialize patterns for all tags
+    DOMAIN_TAGS.forEach(tag => {
+      tagPatterns.domain[tag] = {}
+    })
+    CAREER_TAGS.forEach(tag => {
+      tagPatterns.career[tag] = {}
+    })
+
+    // Analyze all historical journals
+    journals.forEach(journal => {
+      const sections = ['insights', 'sparks', 'roadblocks']
+      sections.forEach(section => {
+        journal[section]?.forEach(item => {
+          if (!item.text) return
+
+          const words = extractWords(item.text)
+
+          // Learn from domain tags
+          if (item.domainTag && tagPatterns.domain[item.domainTag]) {
+            words.forEach(word => {
+              tagPatterns.domain[item.domainTag][word] =
+                (tagPatterns.domain[item.domainTag][word] || 0) + 1
+            })
+          }
+
+          // Learn from career tags
+          item.careerTags?.forEach(careerTag => {
+            if (tagPatterns.career[careerTag]) {
+              words.forEach(word => {
+                tagPatterns.career[careerTag][word] =
+                  (tagPatterns.career[careerTag][word] || 0) + 1
+              })
+            }
+          })
+        })
+      })
+    })
+
+    return tagPatterns
+  }
+
+  // Calculate relevance score between text and a tag's learned patterns
+  const calculateRelevance = (text, tagWordFrequencies) => {
+    if (Object.keys(tagWordFrequencies).length === 0) return 0
+
+    const textWords = new Set(extractWords(text))
+    let score = 0
+    let totalFrequency = 0
+
+    Object.entries(tagWordFrequencies).forEach(([word, frequency]) => {
+      totalFrequency += frequency
+      if (textWords.has(word)) {
+        score += frequency
+      }
+    })
+
+    // Return normalized score (0-1)
+    return totalFrequency > 0 ? score / totalFrequency : 0
+  }
+
+  // Extract potential project names from text
+  const extractPotentialProjectTags = (text) => {
+    const suggestions = []
+
+    // Look for capitalized words/phrases (2-3 words max)
+    const capitalizedPattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g
+    const matches = text.match(capitalizedPattern) || []
+
+    matches.forEach(match => {
+      const normalized = match.toLowerCase().replace(/\s+/g, '-')
+      // Only suggest if it's not already a project tag and is reasonable length
+      if (!projectTags.includes(normalized) && normalized.length >= 3 && normalized.length <= 30) {
+        if (!suggestions.includes(normalized)) {
+          suggestions.push(normalized)
+        }
+      }
+    })
+
+    // Look for patterns like "working on X", "for the X project", "X initiative"
+    const patterns = [
+      /(?:working on|focusing on|building|developing)\s+(?:the\s+)?([a-zA-Z0-9\s-]+?)(?:\s+project|\s+initiative|\s+system|$)/gi,
+      /(?:for|with)\s+(?:the\s+)?([a-zA-Z][a-zA-Z0-9\s-]+?)\s+(?:project|initiative|program)/gi
+    ]
+
+    patterns.forEach(pattern => {
+      const matches = [...text.matchAll(pattern)]
+      matches.forEach(match => {
+        if (match[1]) {
+          const normalized = match[1].trim().toLowerCase().replace(/\s+/g, '-')
+          if (!projectTags.includes(normalized) && normalized.length >= 3 && normalized.length <= 30) {
+            if (!suggestions.includes(normalized)) {
+              suggestions.push(normalized)
+            }
+          }
+        }
+      })
+    })
+
+    return suggestions.slice(0, 3) // Limit to top 3 suggestions
+  }
+
+  // Suggest tags for an item based on learned patterns from history
   const suggestTagsForItem = (text) => {
-    const lowerText = text.toLowerCase()
     const suggestions = {
       domain: [],
       career: [],
-      project: []
+      project: [],
+      newProjectTags: []
     }
 
-    // Domain tag suggestions
-    const domainKeywords = {
-      'current-project': ['working on', 'progress', 'development', 'implementing', 'building'],
-      'team-project': ['team', 'collaboration', 'meeting', 'group', 'together'],
-      'process-improvement': ['improve', 'streamline', 'optimize', 'efficiency', 'process', 'better way'],
-      'future-idea': ['idea', 'thinking about', 'concept', 'future', 'potential', 'could'],
-      'people-leadership': ['leadership', 'mentoring', 'coaching', 'managing', 'team member', 'people'],
-      'career-strategy': ['career', 'growth', 'goal', 'advancement', 'strategy', 'planning'],
-      'risk-or-theme': ['risk', 'concern', 'issue', 'theme', 'pattern', 'trend']
+    // If no historical data, return empty suggestions
+    if (journals.length === 0) {
+      // Still check existing project tags by simple matching
+      projectTags.forEach(tag => {
+        if (text.toLowerCase().includes(tag.toLowerCase())) {
+          suggestions.project.push(tag)
+        }
+      })
+      // Suggest new project tags
+      suggestions.newProjectTags = extractPotentialProjectTags(text)
+      return suggestions
     }
 
-    const careerKeywords = {
-      'director-path': ['director', 'leadership', 'strategic', 'executive'],
-      'methodology': ['methodology', 'framework', 'approach', 'process', 'standard'],
-      'QA-review': ['quality', 'review', 'audit', 'qa', 'testing', 'validation'],
-      'audit-analytics': ['audit', 'analytics', 'data', 'analysis', 'metrics'],
-      'talent-development': ['talent', 'training', 'development', 'skill', 'learning', 'growth']
-    }
+    // Learn patterns from history
+    const tagPatterns = learnTagPatterns()
 
-    // Check domain tags
-    Object.entries(domainKeywords).forEach(([tag, keywords]) => {
-      if (keywords.some(keyword => lowerText.includes(keyword))) {
-        suggestions.domain.push(tag)
+    // Score each domain tag based on learned patterns
+    const domainScores = []
+    DOMAIN_TAGS.forEach(tag => {
+      const score = calculateRelevance(text, tagPatterns.domain[tag])
+      if (score > 0.1) { // Only suggest if relevance is above threshold
+        domainScores.push({ tag, score })
       }
     })
 
-    // Check career tags
-    Object.entries(careerKeywords).forEach(([tag, keywords]) => {
-      if (keywords.some(keyword => lowerText.includes(keyword))) {
-        suggestions.career.push(tag)
+    // Sort by score and take top suggestions
+    suggestions.domain = domainScores
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map(item => item.tag)
+
+    // Score each career tag based on learned patterns
+    const careerScores = []
+    CAREER_TAGS.forEach(tag => {
+      const score = calculateRelevance(text, tagPatterns.career[tag])
+      if (score > 0.1) { // Only suggest if relevance is above threshold
+        careerScores.push({ tag, score })
       }
     })
 
-    // Check project tags
+    // Sort by score and take top suggestions
+    suggestions.career = careerScores
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map(item => item.tag)
+
+    // Check existing project tags by matching text
     projectTags.forEach(tag => {
-      if (lowerText.includes(tag.toLowerCase())) {
+      if (text.toLowerCase().includes(tag.toLowerCase())) {
         suggestions.project.push(tag)
       }
     })
+
+    // Suggest new project tags based on text analysis
+    suggestions.newProjectTags = extractPotentialProjectTags(text)
 
     return suggestions
   }
@@ -822,6 +995,7 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                     toggleItemProjectTag={toggleItemProjectTag}
                     deleteItem={deleteItem}
                     suggestTagsForItem={suggestTagsForItem}
+                    addProjectTag={addProjectTag}
                   />
                 ))
               )}
@@ -854,6 +1028,7 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                     toggleItemProjectTag={toggleItemProjectTag}
                     deleteItem={deleteItem}
                     suggestTagsForItem={suggestTagsForItem}
+                    addProjectTag={addProjectTag}
                   />
                 ))
               )}
@@ -886,6 +1061,7 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                     toggleItemProjectTag={toggleItemProjectTag}
                     deleteItem={deleteItem}
                     suggestTagsForItem={suggestTagsForItem}
+                    addProjectTag={addProjectTag}
                   />
                 ))
               )}
@@ -918,6 +1094,7 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                     toggleItemProjectTag={toggleItemProjectTag}
                     deleteItem={deleteItem}
                     suggestTagsForItem={suggestTagsForItem}
+                    addProjectTag={addProjectTag}
                   />
                 ))
               )}
