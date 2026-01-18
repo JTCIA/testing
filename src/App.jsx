@@ -24,9 +24,10 @@ const CAREER_TAGS = [
 const generateId = () => Math.random().toString(36).substring(2, 9)
 
 function App() {
-  const [view, setView] = useState('journal') // 'journal', 'search', 'recap', 'manage-tags'
+  const [view, setView] = useState('journal') // 'journal', 'search', 'recap', 'manage-tags', 'summaries'
   const [journals, setJournals] = useState([])
   const [projectTags, setProjectTags] = useState([]) // User-created project tags
+  const [weeklySummaries, setWeeklySummaries] = useState([]) // Saved weekly summaries
   const [currentDate, setCurrentDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [currentJournal, setCurrentJournal] = useState({
     focus: [],
@@ -89,6 +90,11 @@ function App() {
     if (savedProjectTags) {
       setProjectTags(JSON.parse(savedProjectTags))
     }
+
+    const savedSummaries = localStorage.getItem('weeklySummaries')
+    if (savedSummaries) {
+      setWeeklySummaries(JSON.parse(savedSummaries))
+    }
   }, [])
 
   // Save journals to local storage
@@ -104,6 +110,13 @@ function App() {
       localStorage.setItem('projectTags', JSON.stringify(projectTags))
     }
   }, [projectTags])
+
+  // Save weekly summaries to local storage
+  useEffect(() => {
+    if (weeklySummaries.length > 0) {
+      localStorage.setItem('weeklySummaries', JSON.stringify(weeklySummaries))
+    }
+  }, [weeklySummaries])
 
   // Load journal for current date when date changes
   useEffect(() => {
@@ -216,7 +229,8 @@ function App() {
   // Validate journal before saving
   const validateJournal = () => {
     const errors = []
-    const sections = ['focus', 'insights', 'sparks', 'roadblocks']
+    // Focus doesn't require tags - it's just a todo list
+    const sections = ['insights', 'sparks', 'roadblocks']
 
     sections.forEach(section => {
       currentJournal[section].forEach((item, idx) => {
@@ -227,6 +241,161 @@ function App() {
     })
 
     return errors
+  }
+
+  // Suggest tags for an item based on its text
+  const suggestTagsForItem = (text) => {
+    const lowerText = text.toLowerCase()
+    const suggestions = {
+      domain: [],
+      career: [],
+      project: []
+    }
+
+    // Domain tag suggestions
+    const domainKeywords = {
+      'current-project': ['working on', 'progress', 'development', 'implementing', 'building'],
+      'team-project': ['team', 'collaboration', 'meeting', 'group', 'together'],
+      'process-improvement': ['improve', 'streamline', 'optimize', 'efficiency', 'process', 'better way'],
+      'future-idea': ['idea', 'thinking about', 'concept', 'future', 'potential', 'could'],
+      'people-leadership': ['leadership', 'mentoring', 'coaching', 'managing', 'team member', 'people'],
+      'career-strategy': ['career', 'growth', 'goal', 'advancement', 'strategy', 'planning'],
+      'risk-or-theme': ['risk', 'concern', 'issue', 'theme', 'pattern', 'trend']
+    }
+
+    const careerKeywords = {
+      'director-path': ['director', 'leadership', 'strategic', 'executive'],
+      'methodology': ['methodology', 'framework', 'approach', 'process', 'standard'],
+      'QA-review': ['quality', 'review', 'audit', 'qa', 'testing', 'validation'],
+      'audit-analytics': ['audit', 'analytics', 'data', 'analysis', 'metrics'],
+      'talent-development': ['talent', 'training', 'development', 'skill', 'learning', 'growth']
+    }
+
+    // Check domain tags
+    Object.entries(domainKeywords).forEach(([tag, keywords]) => {
+      if (keywords.some(keyword => lowerText.includes(keyword))) {
+        suggestions.domain.push(tag)
+      }
+    })
+
+    // Check career tags
+    Object.entries(careerKeywords).forEach(([tag, keywords]) => {
+      if (keywords.some(keyword => lowerText.includes(keyword))) {
+        suggestions.career.push(tag)
+      }
+    })
+
+    // Check project tags
+    projectTags.forEach(tag => {
+      if (lowerText.includes(tag.toLowerCase())) {
+        suggestions.project.push(tag)
+      }
+    })
+
+    return suggestions
+  }
+
+  // Generate prompt for LLM to summarize the week
+  const generateWeeklySummaryPrompt = (weekData) => {
+    const { weekJournals, domainTagFrequency, careerTagFrequency, projectTagFrequency } = weekData
+
+    let prompt = `Please analyze my productivity journal entries from this week and provide a thoughtful summary.
+
+**Week Overview:**
+- Total entries: ${weekJournals.length}
+- Date range: ${format(parseISO(weekJournals[0]?.date || new Date().toISOString()), 'MMMM d, yyyy')} to ${format(parseISO(weekJournals[weekJournals.length - 1]?.date || new Date().toISOString()), 'MMMM d, yyyy')}
+
+**Domain Distribution:**
+${Object.entries(domainTagFrequency).map(([tag, count]) => `- ${tag}: ${count} entries`).join('\n')}
+
+**Career Focus:**
+${Object.keys(careerTagFrequency).length > 0 ? Object.entries(careerTagFrequency).map(([tag, count]) => `- ${tag}: ${count} entries`).join('\n') : 'None this week'}
+
+**Active Projects:**
+${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequency).map(([tag, count]) => `- ${tag}: ${count} entries`).join('\n') : 'None this week'}
+
+**Detailed Entries:**
+
+`
+
+    weekJournals.forEach((journal, idx) => {
+      prompt += `\n### ${format(parseISO(journal.date), 'EEEE, MMMM d, yyyy')}\n\n`
+
+      if (journal.focus && journal.focus.length > 0) {
+        prompt += `**Focus:**\n`
+        journal.focus.forEach(item => {
+          prompt += `- ${item.text}\n`
+        })
+        prompt += '\n'
+      }
+
+      if (journal.insights && journal.insights.length > 0) {
+        prompt += `**Insights:**\n`
+        journal.insights.forEach(item => {
+          const tags = [
+            item.domainTag ? `#${item.domainTag}` : null,
+            ...(item.careerTags || []).map(t => `#${t}`),
+            ...(item.projectTags || []).map(t => `#${t}`)
+          ].filter(Boolean).join(' ')
+          prompt += `- ${item.text} [${tags}]\n`
+        })
+        prompt += '\n'
+      }
+
+      if (journal.sparks && journal.sparks.length > 0) {
+        prompt += `**Sparks (Future Ideas):**\n`
+        journal.sparks.forEach(item => {
+          const tags = [
+            item.domainTag ? `#${item.domainTag}` : null,
+            ...(item.careerTags || []).map(t => `#${t}`),
+            ...(item.projectTags || []).map(t => `#${t}`)
+          ].filter(Boolean).join(' ')
+          prompt += `- ${item.text} [${tags}]\n`
+        })
+        prompt += '\n'
+      }
+
+      if (journal.roadblocks && journal.roadblocks.length > 0) {
+        prompt += `**Roadblocks:**\n`
+        journal.roadblocks.forEach(item => {
+          const tags = [
+            item.domainTag ? `#${item.domainTag}` : null,
+            ...(item.careerTags || []).map(t => `#${t}`),
+            ...(item.projectTags || []).map(t => `#${t}`)
+          ].filter(Boolean).join(' ')
+          prompt += `- ${item.text} [${tags}]\n`
+        })
+        prompt += '\n'
+      }
+    })
+
+    prompt += `\n**Please provide:**
+1. A 2-3 paragraph executive summary of the week
+2. Key themes and patterns you notice
+3. Wins and accomplishments
+4. Areas of concern or focus needed
+5. Recommendations for next week`
+
+    return prompt
+  }
+
+  // Save a weekly summary
+  const saveWeeklySummary = (summary, weekStart, weekEnd) => {
+    const newSummary = {
+      id: generateId(),
+      summary,
+      weekStart,
+      weekEnd,
+      createdAt: new Date().toISOString()
+    }
+
+    setWeeklySummaries(prev => [...prev, newSummary])
+    alert('Weekly summary saved!')
+  }
+
+  // Delete a weekly summary
+  const deleteWeeklySummary = (id) => {
+    setWeeklySummaries(prev => prev.filter(s => s.id !== id))
   }
 
   // Save journal
@@ -333,6 +502,9 @@ function App() {
 
   // Component: Item Editor
   const ItemEditor = ({ section, item, index }) => {
+    const [showSuggestions, setShowSuggestions] = useState(false)
+    const [suggestions, setSuggestions] = useState({ domain: [], career: [], project: [] })
+
     const sectionLabels = {
       focus: 'Focus Item',
       insights: 'Insight',
@@ -341,7 +513,30 @@ function App() {
     }
 
     const hasText = item.text.trim().length > 0
-    const needsDomainTag = hasText && !item.domainTag
+    const needsDomainTag = section !== 'focus' && hasText && !item.domainTag
+    const isFocus = section === 'focus'
+
+    const handleSuggestTags = () => {
+      if (hasText) {
+        const suggested = suggestTagsForItem(item.text)
+        setSuggestions(suggested)
+        setShowSuggestions(true)
+      }
+    }
+
+    const applySuggestion = (type, tag) => {
+      if (type === 'domain') {
+        setItemDomainTag(section, item.id, tag)
+      } else if (type === 'career') {
+        if (!item.careerTags?.includes(tag)) {
+          toggleItemCareerTag(section, item.id, tag)
+        }
+      } else if (type === 'project') {
+        if (!item.projectTags?.includes(tag)) {
+          toggleItemProjectTag(section, item.id, tag)
+        }
+      }
+    }
 
     return (
       <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
@@ -349,6 +544,7 @@ function App() {
           <h4 className="font-medium text-gray-700">
             {sectionLabels[section]} #{index + 1}
             {needsDomainTag && <span className="ml-2 text-red-600 text-sm">⚠ Domain tag required</span>}
+            {isFocus && <span className="ml-2 text-gray-500 text-sm">(todo list - tags optional)</span>}
           </h4>
           <button
             onClick={() => deleteItem(section, item.id)}
@@ -361,15 +557,84 @@ function App() {
         <textarea
           value={item.text}
           onChange={(e) => updateItemText(section, item.id, e.target.value)}
-          placeholder="Enter your thoughts..."
+          placeholder={isFocus ? "What do you need to focus on today?" : "Enter your thoughts..."}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-20 mb-3"
         />
 
-        {/* Domain Tags (Required - only one) */}
-        <div className="mb-3">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Domain Tag <span className="text-red-600">*</span> (select one)
-          </label>
+        {/* Tag Suggestion Button */}
+        {hasText && !isFocus && (
+          <div className="mb-3">
+            <button
+              onClick={handleSuggestTags}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+            >
+              ✨ Suggest Tags
+            </button>
+
+            {showSuggestions && (
+              <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                {suggestions.domain.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Domain Tags:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {suggestions.domain.map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => applySuggestion('domain', tag)}
+                          className="px-2 py-1 bg-blue-500 text-white rounded-full text-xs hover:bg-blue-600"
+                        >
+                          + #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {suggestions.career.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Career Tags:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {suggestions.career.map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => applySuggestion('career', tag)}
+                          className="px-2 py-1 bg-purple-500 text-white rounded-full text-xs hover:bg-purple-600"
+                        >
+                          + #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {suggestions.project.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Project Tags:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {suggestions.project.map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => applySuggestion('project', tag)}
+                          className="px-2 py-1 bg-green-500 text-white rounded-full text-xs hover:bg-green-600"
+                        >
+                          + #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {suggestions.domain.length === 0 && suggestions.career.length === 0 && suggestions.project.length === 0 && (
+                  <p className="text-xs text-gray-600">No tag suggestions found for this text.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Domain Tags (Required for non-Focus - only one) */}
+        {!isFocus && (
+          <div className="mb-3">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Domain Tag <span className="text-red-600">*</span> (select one)
+            </label>
           <div className="flex flex-wrap gap-2">
             {DOMAIN_TAGS.map(tag => (
               <button
@@ -385,9 +650,11 @@ function App() {
               </button>
             ))}
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Career Tags (Optional - multiple) */}
+        {!isFocus && (
         <div className="mb-3">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Strategic Career Tags (optional)
@@ -408,9 +675,10 @@ function App() {
             ))}
           </div>
         </div>
+        )}
 
         {/* Project Tags (Optional - multiple) */}
-        {projectTags.length > 0 && (
+        {!isFocus && projectTags.length > 0 && (
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Project Tags (optional)
@@ -488,6 +756,16 @@ function App() {
               }`}
             >
               Manage Project Tags
+            </button>
+            <button
+              onClick={() => setView('summaries')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                view === 'summaries'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Weekly Summaries
             </button>
           </div>
         </div>
@@ -870,6 +1148,54 @@ function App() {
                       </div>
                     </div>
                   )}
+
+                  {/* LLM Summary Generation */}
+                  <div className="border-t pt-6 mt-6">
+                    <h3 className="font-bold text-indigo-900 mb-3">Generate AI Summary</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Copy the prompt below and paste it into ChatGPT, Claude, or your preferred AI assistant to generate a comprehensive weekly summary.
+                    </p>
+
+                    <button
+                      onClick={() => {
+                        const weekData = { weekJournals, domainTagFrequency, careerTagFrequency, projectTagFrequency }
+                        const prompt = generateWeeklySummaryPrompt(weekData)
+                        navigator.clipboard.writeText(prompt)
+                        alert('Prompt copied to clipboard! Paste it into your AI assistant.')
+                      }}
+                      className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium mb-4"
+                    >
+                      📋 Copy Prompt for AI
+                    </button>
+
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Paste AI-generated summary here to save it:
+                      </label>
+                      <textarea
+                        id="summary-input"
+                        placeholder="Paste the summary from your AI assistant here..."
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-40 mb-3"
+                      />
+                      <button
+                        onClick={() => {
+                          const summaryText = document.getElementById('summary-input').value
+                          if (summaryText.trim()) {
+                            const now = new Date()
+                            const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+                            const weekEnd = endOfWeek(now, { weekStartsOn: 1 })
+                            saveWeeklySummary(summaryText, weekStart.toISOString(), weekEnd.toISOString())
+                            document.getElementById('summary-input').value = ''
+                          } else {
+                            alert('Please paste a summary first!')
+                          }
+                        }}
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                      >
+                        💾 Save Summary
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )
             })()}
@@ -928,7 +1254,8 @@ function App() {
             <div className="mt-8 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold text-gray-700 mb-2">Tag System Overview</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><span className="font-medium text-blue-700">Domain Tags:</span> Required for each item (select exactly one)</li>
+                <li><span className="font-medium text-gray-700">Focus Items:</span> No tags required (simple todo list)</li>
+                <li><span className="font-medium text-blue-700">Domain Tags:</span> Required for Insights, Sparks, and Roadblocks (select exactly one)</li>
                 <li><span className="font-medium text-purple-700">Strategic Career Tags:</span> Optional (select zero or more)</li>
                 <li><span className="font-medium text-green-700">Project Tags:</span> Optional, user-created (select zero or more)</li>
               </ul>
@@ -936,9 +1263,55 @@ function App() {
           </div>
         )}
 
+        {/* Weekly Summaries View */}
+        {view === 'summaries' && (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-indigo-900 mb-4">Saved Weekly Summaries</h2>
+
+            {weeklySummaries.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 mb-2">No saved summaries yet.</p>
+                <p className="text-sm text-gray-400">Go to "Weekly Recap" to generate and save your first summary!</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {weeklySummaries
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .map(summary => (
+                    <div key={summary.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="font-bold text-lg text-indigo-900">
+                            Week of {format(parseISO(summary.weekStart), 'MMMM d')} - {format(parseISO(summary.weekEnd), 'MMMM d, yyyy')}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Saved on {format(parseISO(summary.createdAt), 'MMMM d, yyyy \'at\' h:mm a')}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (confirm('Delete this summary?')) {
+                              deleteWeeklySummary(summary.id)
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap text-gray-700">{summary.summary}</div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Footer Info */}
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Total Journals: {journals.length} | Project Tags: {projectTags.length}</p>
+          <p>Total Journals: {journals.length} | Project Tags: {projectTags.length} | Summaries: {weeklySummaries.length}</p>
         </div>
       </div>
     </div>
