@@ -24,6 +24,221 @@ const CAREER_TAGS = [
 // Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 9)
 
+// Component: Item Editor
+const ItemEditor = ({
+  section,
+  item,
+  index,
+  projectTags,
+  updateItemText,
+  setItemDomainTag,
+  toggleItemCareerTag,
+  toggleItemProjectTag,
+  deleteItem,
+  suggestTagsForItem
+}) => {
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggestions, setSuggestions] = useState({ domain: [], career: [], project: [] })
+
+  const sectionLabels = {
+    focus: 'Focus Item',
+    insights: 'Insight',
+    sparks: 'Spark',
+    roadblocks: 'Roadblock'
+  }
+
+  const hasText = item.text.trim().length > 0
+  const needsDomainTag = section !== 'focus' && hasText && !item.domainTag
+  const isFocus = section === 'focus'
+
+  const handleSuggestTags = () => {
+    if (hasText) {
+      const suggested = suggestTagsForItem(item.text)
+      setSuggestions(suggested)
+      setShowSuggestions(true)
+    }
+  }
+
+  const applySuggestion = (type, tag) => {
+    if (type === 'domain') {
+      setItemDomainTag(section, item.id, tag)
+    } else if (type === 'career') {
+      if (!item.careerTags?.includes(tag)) {
+        toggleItemCareerTag(section, item.id, tag)
+      }
+    } else if (type === 'project') {
+      if (!item.projectTags?.includes(tag)) {
+        toggleItemProjectTag(section, item.id, tag)
+      }
+    }
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+      <div className="flex justify-between items-start mb-3">
+        <h4 className="font-medium text-gray-700">
+          {sectionLabels[section]} #{index + 1}
+          {needsDomainTag && <span className="ml-2 text-red-600 text-sm">⚠ Domain tag required</span>}
+          {isFocus && <span className="ml-2 text-gray-500 text-sm">(todo list - tags optional)</span>}
+        </h4>
+        <button
+          onClick={() => deleteItem(section, item.id)}
+          className="text-red-600 hover:text-red-800 text-sm font-medium"
+        >
+          Delete
+        </button>
+      </div>
+
+      <textarea
+        value={item.text}
+        onChange={(e) => updateItemText(section, item.id, e.target.value)}
+        placeholder={isFocus ? "What do you need to focus on today?" : "Enter your thoughts..."}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-20 mb-3"
+      />
+
+      {/* Tag Suggestion Button */}
+      {hasText && !isFocus && (
+        <div className="mb-3">
+          <button
+            onClick={handleSuggestTags}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+          >
+            ✨ Suggest Tags
+          </button>
+
+          {showSuggestions && (
+            <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              {suggestions.domain.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Domain Tags:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {suggestions.domain.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => applySuggestion('domain', tag)}
+                        className="px-2 py-1 bg-blue-500 text-white rounded-full text-xs hover:bg-blue-600"
+                      >
+                        + #{tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {suggestions.career.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Career Tags:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {suggestions.career.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => applySuggestion('career', tag)}
+                        className="px-2 py-1 bg-purple-500 text-white rounded-full text-xs hover:bg-purple-600"
+                      >
+                        + #{tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {suggestions.project.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Project Tags:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {suggestions.project.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => applySuggestion('project', tag)}
+                        className="px-2 py-1 bg-green-500 text-white rounded-full text-xs hover:bg-green-600"
+                      >
+                        + #{tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {suggestions.domain.length === 0 && suggestions.career.length === 0 && suggestions.project.length === 0 && (
+                <p className="text-xs text-gray-600">No tag suggestions found for this text.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Domain Tags (Required for non-Focus - only one) */}
+      {!isFocus && (
+        <div className="mb-3">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Domain Tag <span className="text-red-600">*</span> (select one)
+          </label>
+        <div className="flex flex-wrap gap-2">
+          {DOMAIN_TAGS.map(tag => (
+            <button
+              key={tag}
+              onClick={() => setItemDomainTag(section, item.id, tag)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                item.domainTag === tag
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+        </div>
+      )}
+
+      {/* Career Tags (Optional - multiple) */}
+      {!isFocus && (
+      <div className="mb-3">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Strategic Career Tags (optional)
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {CAREER_TAGS.map(tag => (
+            <button
+              key={tag}
+              onClick={() => toggleItemCareerTag(section, item.id, tag)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                item.careerTags?.includes(tag)
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      </div>
+      )}
+
+      {/* Project Tags (Optional - multiple) */}
+      {!isFocus && projectTags.length > 0 && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Project Tags (optional)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {projectTags.map(tag => (
+              <button
+                key={tag}
+                onClick={() => toggleItemProjectTag(section, item.id, tag)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                  item.projectTags?.includes(tag)
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function App() {
   const [view, setView] = useState('journal') // 'journal', 'search', 'recap', 'manage-tags', 'summaries'
   const [journals, setJournals] = useState([])
@@ -501,210 +716,6 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
     return { weekJournals, tagFrequency, domainTagFrequency, careerTagFrequency, projectTagFrequency }
   }
 
-  // Component: Item Editor
-  const ItemEditor = ({ section, item, index }) => {
-    const [showSuggestions, setShowSuggestions] = useState(false)
-    const [suggestions, setSuggestions] = useState({ domain: [], career: [], project: [] })
-
-    const sectionLabels = {
-      focus: 'Focus Item',
-      insights: 'Insight',
-      sparks: 'Spark',
-      roadblocks: 'Roadblock'
-    }
-
-    const hasText = item.text.trim().length > 0
-    const needsDomainTag = section !== 'focus' && hasText && !item.domainTag
-    const isFocus = section === 'focus'
-
-    const handleSuggestTags = () => {
-      if (hasText) {
-        const suggested = suggestTagsForItem(item.text)
-        setSuggestions(suggested)
-        setShowSuggestions(true)
-      }
-    }
-
-    const applySuggestion = (type, tag) => {
-      if (type === 'domain') {
-        setItemDomainTag(section, item.id, tag)
-      } else if (type === 'career') {
-        if (!item.careerTags?.includes(tag)) {
-          toggleItemCareerTag(section, item.id, tag)
-        }
-      } else if (type === 'project') {
-        if (!item.projectTags?.includes(tag)) {
-          toggleItemProjectTag(section, item.id, tag)
-        }
-      }
-    }
-
-    return (
-      <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
-        <div className="flex justify-between items-start mb-3">
-          <h4 className="font-medium text-gray-700">
-            {sectionLabels[section]} #{index + 1}
-            {needsDomainTag && <span className="ml-2 text-red-600 text-sm">⚠ Domain tag required</span>}
-            {isFocus && <span className="ml-2 text-gray-500 text-sm">(todo list - tags optional)</span>}
-          </h4>
-          <button
-            onClick={() => deleteItem(section, item.id)}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
-          >
-            Delete
-          </button>
-        </div>
-
-        <textarea
-          value={item.text}
-          onChange={(e) => updateItemText(section, item.id, e.target.value)}
-          placeholder={isFocus ? "What do you need to focus on today?" : "Enter your thoughts..."}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-20 mb-3"
-        />
-
-        {/* Tag Suggestion Button */}
-        {hasText && !isFocus && (
-          <div className="mb-3">
-            <button
-              onClick={handleSuggestTags}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
-            >
-              ✨ Suggest Tags
-            </button>
-
-            {showSuggestions && (
-              <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                {suggestions.domain.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Domain Tags:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {suggestions.domain.map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => applySuggestion('domain', tag)}
-                          className="px-2 py-1 bg-blue-500 text-white rounded-full text-xs hover:bg-blue-600"
-                        >
-                          + #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {suggestions.career.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Career Tags:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {suggestions.career.map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => applySuggestion('career', tag)}
-                          className="px-2 py-1 bg-purple-500 text-white rounded-full text-xs hover:bg-purple-600"
-                        >
-                          + #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {suggestions.project.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-purple-900 mb-1">Suggested Project Tags:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {suggestions.project.map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => applySuggestion('project', tag)}
-                          className="px-2 py-1 bg-green-500 text-white rounded-full text-xs hover:bg-green-600"
-                        >
-                          + #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {suggestions.domain.length === 0 && suggestions.career.length === 0 && suggestions.project.length === 0 && (
-                  <p className="text-xs text-gray-600">No tag suggestions found for this text.</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Domain Tags (Required for non-Focus - only one) */}
-        {!isFocus && (
-          <div className="mb-3">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Domain Tag <span className="text-red-600">*</span> (select one)
-            </label>
-          <div className="flex flex-wrap gap-2">
-            {DOMAIN_TAGS.map(tag => (
-              <button
-                key={tag}
-                onClick={() => setItemDomainTag(section, item.id, tag)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                  item.domainTag === tag
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                #{tag}
-              </button>
-            ))}
-          </div>
-          </div>
-        )}
-
-        {/* Career Tags (Optional - multiple) */}
-        {!isFocus && (
-        <div className="mb-3">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Strategic Career Tags (optional)
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {CAREER_TAGS.map(tag => (
-              <button
-                key={tag}
-                onClick={() => toggleItemCareerTag(section, item.id, tag)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                  item.careerTags?.includes(tag)
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                #{tag}
-              </button>
-            ))}
-          </div>
-        </div>
-        )}
-
-        {/* Project Tags (Optional - multiple) */}
-        {!isFocus && projectTags.length > 0 && (
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Project Tags (optional)
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {projectTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => toggleItemProjectTag(section, item.id, tag)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                    item.projectTags?.includes(tag)
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  #{tag}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
   // All available tags for search
   const allTags = [...DOMAIN_TAGS, ...CAREER_TAGS, ...projectTags]
 
@@ -799,7 +810,19 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                 <p className="text-gray-500 italic">No focus items yet. Click "Add Focus Item" to start.</p>
               ) : (
                 currentJournal.focus.map((item, idx) => (
-                  <ItemEditor key={item.id} section="focus" item={item} index={idx} />
+                  <ItemEditor
+                    key={item.id}
+                    section="focus"
+                    item={item}
+                    index={idx}
+                    projectTags={projectTags}
+                    updateItemText={updateItemText}
+                    setItemDomainTag={setItemDomainTag}
+                    toggleItemCareerTag={toggleItemCareerTag}
+                    toggleItemProjectTag={toggleItemProjectTag}
+                    deleteItem={deleteItem}
+                    suggestTagsForItem={suggestTagsForItem}
+                  />
                 ))
               )}
             </div>
@@ -819,7 +842,19 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                 <p className="text-gray-500 italic">No insights yet. Click "Add Insight" to start.</p>
               ) : (
                 currentJournal.insights.map((item, idx) => (
-                  <ItemEditor key={item.id} section="insights" item={item} index={idx} />
+                  <ItemEditor
+                    key={item.id}
+                    section="insights"
+                    item={item}
+                    index={idx}
+                    projectTags={projectTags}
+                    updateItemText={updateItemText}
+                    setItemDomainTag={setItemDomainTag}
+                    toggleItemCareerTag={toggleItemCareerTag}
+                    toggleItemProjectTag={toggleItemProjectTag}
+                    deleteItem={deleteItem}
+                    suggestTagsForItem={suggestTagsForItem}
+                  />
                 ))
               )}
             </div>
@@ -839,7 +874,19 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                 <p className="text-gray-500 italic">No sparks yet. Click "Add Spark" to start.</p>
               ) : (
                 currentJournal.sparks.map((item, idx) => (
-                  <ItemEditor key={item.id} section="sparks" item={item} index={idx} />
+                  <ItemEditor
+                    key={item.id}
+                    section="sparks"
+                    item={item}
+                    index={idx}
+                    projectTags={projectTags}
+                    updateItemText={updateItemText}
+                    setItemDomainTag={setItemDomainTag}
+                    toggleItemCareerTag={toggleItemCareerTag}
+                    toggleItemProjectTag={toggleItemProjectTag}
+                    deleteItem={deleteItem}
+                    suggestTagsForItem={suggestTagsForItem}
+                  />
                 ))
               )}
             </div>
@@ -859,7 +906,19 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
                 <p className="text-gray-500 italic">No roadblocks yet. Click "Add Roadblock" to start.</p>
               ) : (
                 currentJournal.roadblocks.map((item, idx) => (
-                  <ItemEditor key={item.id} section="roadblocks" item={item} index={idx} />
+                  <ItemEditor
+                    key={item.id}
+                    section="roadblocks"
+                    item={item}
+                    index={idx}
+                    projectTags={projectTags}
+                    updateItemText={updateItemText}
+                    setItemDomainTag={setItemDomainTag}
+                    toggleItemCareerTag={toggleItemCareerTag}
+                    toggleItemProjectTag={toggleItemProjectTag}
+                    deleteItem={deleteItem}
+                    suggestTagsForItem={suggestTagsForItem}
+                  />
                 ))
               )}
             </div>
