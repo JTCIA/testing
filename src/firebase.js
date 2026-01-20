@@ -5,12 +5,12 @@ import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } 
 // Firebase configuration - YOU WILL NEED TO REPLACE THESE VALUES
 // Instructions: After creating your Firebase project, you'll get these values from the Firebase Console
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA4LJBFIa-_QOMEETnFAApxF9vzeQlIVuY",
+  authDomain: "productivity-journal-f189e.firebaseapp.com",
+  projectId: "productivity-journal-f189e",
+  storageBucket: "productivity-journal-f189e.firebasestorage.app",
+  messagingSenderId: "933693749374",
+  appId: "1:933693749374:web:00cd198d4332221418c02f"
 }
 
 // Initialize Firebase
