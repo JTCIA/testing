@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
+import {
+  initAuth,
+  saveJournalsToFirebase,
+  loadJournalsFromFirebase,
+  saveProjectTagsToFirebase,
+  loadProjectTagsFromFirebase,
+  saveWeeklySummariesToFirebase,
+  loadWeeklySummariesFromFirebase
+} from './firebase'
 
 // Three tag buckets
 const DOMAIN_TAGS = [
@@ -285,6 +294,8 @@ function App() {
   })
   const [searchTags, setSearchTags] = useState([])
   const [newProjectTag, setNewProjectTag] = useState('')
+  const [userId, setUserId] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Helper to convert old format data to new format
   const convertToNewFormat = (data) => {
@@ -303,14 +314,20 @@ function App() {
     return []
   }
 
-  // Load data from local storage
+  // Initialize Firebase auth and load data
   useEffect(() => {
-    const savedJournals = localStorage.getItem('productivityJournals')
-    if (savedJournals) {
-      const parsedJournals = JSON.parse(savedJournals)
+    initAuth(async (uid) => {
+      setUserId(uid)
 
-      // Migrate old format to new format
-      const migratedJournals = parsedJournals.map(journal => {
+      // Load all data from Firebase
+      const [loadedJournals, loadedTags, loadedSummaries] = await Promise.all([
+        loadJournalsFromFirebase(uid),
+        loadProjectTagsFromFirebase(uid),
+        loadWeeklySummariesFromFirebase(uid)
+      ])
+
+      // Migrate old format journals if needed
+      const migratedJournals = loadedJournals.map(journal => {
         const needsMigration =
           (journal.focus && !Array.isArray(journal.focus)) ||
           (journal.insights && !Array.isArray(journal.insights)) ||
@@ -330,41 +347,32 @@ function App() {
       })
 
       setJournals(migratedJournals)
-      // Save migrated data back to localStorage
-      localStorage.setItem('productivityJournals', JSON.stringify(migratedJournals))
-    }
-
-    const savedProjectTags = localStorage.getItem('projectTags')
-    if (savedProjectTags) {
-      setProjectTags(JSON.parse(savedProjectTags))
-    }
-
-    const savedSummaries = localStorage.getItem('weeklySummaries')
-    if (savedSummaries) {
-      setWeeklySummaries(JSON.parse(savedSummaries))
-    }
+      setProjectTags(loadedTags)
+      setWeeklySummaries(loadedSummaries)
+      setIsLoading(false)
+    })
   }, [])
 
-  // Save journals to local storage
+  // Save journals to Firebase
   useEffect(() => {
-    if (journals.length > 0) {
-      localStorage.setItem('productivityJournals', JSON.stringify(journals))
+    if (userId && journals.length > 0 && !isLoading) {
+      saveJournalsToFirebase(userId, journals)
     }
-  }, [journals])
+  }, [journals, userId, isLoading])
 
-  // Save project tags to local storage
+  // Save project tags to Firebase
   useEffect(() => {
-    if (projectTags.length > 0) {
-      localStorage.setItem('projectTags', JSON.stringify(projectTags))
+    if (userId && !isLoading) {
+      saveProjectTagsToFirebase(userId, projectTags)
     }
-  }, [projectTags])
+  }, [projectTags, userId, isLoading])
 
-  // Save weekly summaries to local storage
+  // Save weekly summaries to Firebase
   useEffect(() => {
-    if (weeklySummaries.length > 0) {
-      localStorage.setItem('weeklySummaries', JSON.stringify(weeklySummaries))
+    if (userId && !isLoading) {
+      saveWeeklySummariesToFirebase(userId, weeklySummaries)
     }
-  }, [weeklySummaries])
+  }, [weeklySummaries, userId, isLoading])
 
   // Load journal for current date when date changes
   useEffect(() => {
@@ -849,6 +857,19 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
 
   // All available tags for search
   const allTags = [...DOMAIN_TAGS, ...CAREER_TAGS, ...projectTags]
+
+  // Show loading screen while Firebase initializes
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-indigo-900 mb-2">Loading Your Journal</h2>
+          <p className="text-gray-600">Syncing your data...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
