@@ -39,7 +39,8 @@ const ItemEditor = ({
   addProjectTag
 }) => {
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [suggestions, setSuggestions] = useState({ domain: [], career: [], project: [], newProjectTags: [] })
+  const [suggestions, setSuggestions] = useState({ domain: [], career: [], project: [] })
+  const [newTagInput, setNewTagInput] = useState('')
 
   const sectionLabels = {
     focus: 'Focus Item',
@@ -157,32 +158,7 @@ const ItemEditor = ({
                   </div>
                 </div>
               )}
-              {suggestions.newProjectTags && suggestions.newProjectTags.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-purple-900 mb-1">💡 Create New Project Tags:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {suggestions.newProjectTags.map(tag => (
-                      <button
-                        key={tag}
-                        onClick={() => {
-                          addProjectTag(tag)
-                          // Auto-apply the tag after creating it
-                          setTimeout(() => {
-                            if (!item.projectTags?.includes(tag)) {
-                              applySuggestion('project', tag)
-                            }
-                          }, 100)
-                        }}
-                        className="px-2 py-1 bg-yellow-500 text-white rounded-full text-xs hover:bg-yellow-600 flex items-center gap-1"
-                      >
-                        <span>✨ Create #{tag}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-600 mt-1 italic">These tags don't exist yet - click to create and apply them</p>
-                </div>
-              )}
-              {suggestions.domain.length === 0 && suggestions.career.length === 0 && suggestions.project.length === 0 && suggestions.newProjectTags.length === 0 && (
+              {suggestions.domain.length === 0 && suggestions.career.length === 0 && suggestions.project.length === 0 && (
                 <p className="text-xs text-gray-600">No tag suggestions found. The app will learn from your tagging patterns over time!</p>
               )}
             </div>
@@ -239,25 +215,55 @@ const ItemEditor = ({
       )}
 
       {/* Project Tags (Optional - multiple) */}
-      {!isFocus && projectTags.length > 0 && (
+      {!isFocus && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Project Tags (optional)
           </label>
-          <div className="flex flex-wrap gap-2">
-            {projectTags.map(tag => (
-              <button
-                key={tag}
-                onClick={() => toggleItemProjectTag(section, item.id, tag)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                  item.projectTags?.includes(tag)
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                #{tag}
-              </button>
-            ))}
+          {projectTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {projectTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => toggleItemProjectTag(section, item.id, tag)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                    item.projectTags?.includes(tag)
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  #{tag}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newTagInput}
+              onChange={(e) => setNewTagInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && newTagInput.trim()) {
+                  addProjectTag(newTagInput.trim())
+                  toggleItemProjectTag(section, item.id, newTagInput.trim())
+                  setNewTagInput('')
+                }
+              }}
+              placeholder="Create new project tag..."
+              className="flex-1 px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+            <button
+              onClick={() => {
+                if (newTagInput.trim()) {
+                  addProjectTag(newTagInput.trim())
+                  toggleItemProjectTag(section, item.id, newTagInput.trim())
+                  setNewTagInput('')
+                }
+              }}
+              className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+            >
+              + Add
+            </button>
           </div>
         </div>
       )}
@@ -575,66 +581,21 @@ function App() {
     return totalFrequency > 0 ? score / totalFrequency : 0
   }
 
-  // Extract potential project names from text
-  const extractPotentialProjectTags = (text) => {
-    const suggestions = []
-
-    // Look for capitalized words/phrases (2-3 words max)
-    const capitalizedPattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g
-    const matches = text.match(capitalizedPattern) || []
-
-    matches.forEach(match => {
-      const normalized = match.toLowerCase().replace(/\s+/g, '-')
-      // Only suggest if it's not already a project tag and is reasonable length
-      if (!projectTags.includes(normalized) && normalized.length >= 3 && normalized.length <= 30) {
-        if (!suggestions.includes(normalized)) {
-          suggestions.push(normalized)
-        }
-      }
-    })
-
-    // Look for patterns like "working on X", "for the X project", "X initiative"
-    const patterns = [
-      /(?:working on|focusing on|building|developing)\s+(?:the\s+)?([a-zA-Z0-9\s-]+?)(?:\s+project|\s+initiative|\s+system|$)/gi,
-      /(?:for|with)\s+(?:the\s+)?([a-zA-Z][a-zA-Z0-9\s-]+?)\s+(?:project|initiative|program)/gi
-    ]
-
-    patterns.forEach(pattern => {
-      const matches = [...text.matchAll(pattern)]
-      matches.forEach(match => {
-        if (match[1]) {
-          const normalized = match[1].trim().toLowerCase().replace(/\s+/g, '-')
-          if (!projectTags.includes(normalized) && normalized.length >= 3 && normalized.length <= 30) {
-            if (!suggestions.includes(normalized)) {
-              suggestions.push(normalized)
-            }
-          }
-        }
-      })
-    })
-
-    return suggestions.slice(0, 3) // Limit to top 3 suggestions
-  }
-
   // Suggest tags for an item based on learned patterns from history
   const suggestTagsForItem = (text) => {
     const suggestions = {
       domain: [],
       career: [],
-      project: [],
-      newProjectTags: []
+      project: []
     }
 
-    // If no historical data, return empty suggestions
+    // If no historical data, still check existing project tags by simple matching
     if (journals.length === 0) {
-      // Still check existing project tags by simple matching
       projectTags.forEach(tag => {
         if (text.toLowerCase().includes(tag.toLowerCase())) {
           suggestions.project.push(tag)
         }
       })
-      // Suggest new project tags
-      suggestions.newProjectTags = extractPotentialProjectTags(text)
       return suggestions
     }
 
@@ -677,9 +638,6 @@ function App() {
         suggestions.project.push(tag)
       }
     })
-
-    // Suggest new project tags based on text analysis
-    suggestions.newProjectTags = extractPotentialProjectTags(text)
 
     return suggestions
   }
