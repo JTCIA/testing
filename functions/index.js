@@ -1,20 +1,21 @@
-import { onRequest, onSchedule } from 'firebase-functions/v2/scheduler';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https';
 import { beforeUserCreated } from 'firebase-functions/v2/identity';
+import { defineString } from 'firebase-functions/params';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import sgMail from '@sendgrid/mail';
 
+// Define configuration parameters
+const SENDGRID_API_KEY = defineString('SENDGRID_KEY');
+const SENDER_EMAIL = defineString('SENDER_EMAIL', { default: 'journal@beercountant.com' });
+const APP_URL = defineString('APP_URL', { default: 'https://journal.beercountant.com' });
+
 // Initialize Firebase Admin
 initializeApp();
 const db = getFirestore();
 const auth = getAuth();
-
-// Initialize SendGrid
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const SENDER_EMAIL = process.env.SENDER_EMAIL || 'journal@beercountant.com';
-const APP_URL = process.env.APP_URL || 'https://journal.beercountant.com';
 
 if (SENDGRID_API_KEY) {
   sgMail.setApiKey(SENDGRID_API_KEY);
