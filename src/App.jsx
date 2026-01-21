@@ -8,8 +8,11 @@ import {
   saveProjectTagsToFirebase,
   loadProjectTagsFromFirebase,
   saveWeeklySummariesToFirebase,
-  loadWeeklySummariesFromFirebase
+  loadWeeklySummariesFromFirebase,
+  getCurrentUser
 } from './firebase'
+import Login from './components/Login'
+import Settings from './components/Settings'
 
 // Three tag buckets
 const DOMAIN_TAGS = [
@@ -281,7 +284,7 @@ const ItemEditor = ({
 }
 
 function App() {
-  const [view, setView] = useState('journal') // 'journal', 'search', 'recap', 'manage-tags', 'summaries'
+  const [view, setView] = useState('journal') // 'journal', 'search', 'recap', 'manage-tags', 'summaries', 'settings'
   const [journals, setJournals] = useState([])
   const [projectTags, setProjectTags] = useState([]) // User-created project tags
   const [weeklySummaries, setWeeklySummaries] = useState([]) // Saved weekly summaries
@@ -294,8 +297,10 @@ function App() {
   })
   const [searchTags, setSearchTags] = useState([])
   const [newProjectTag, setNewProjectTag] = useState('')
+  const [user, setUser] = useState(null)
   const [userId, setUserId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   // Helper to convert old format data to new format
   const convertToNewFormat = (data) => {
@@ -316,14 +321,26 @@ function App() {
 
   // Initialize Firebase auth and load data
   useEffect(() => {
-    initAuth(async (uid) => {
-      setUserId(uid)
+    initAuth(async (currentUser) => {
+      if (!currentUser) {
+        // No user signed in - show login screen
+        setIsAuthenticated(false)
+        setUser(null)
+        setUserId(null)
+        setIsLoading(false)
+        return
+      }
+
+      // User is signed in
+      setUser(currentUser)
+      setUserId(currentUser.uid)
+      setIsAuthenticated(true)
 
       // Load all data from Firebase
       const [loadedJournals, loadedTags, loadedSummaries] = await Promise.all([
-        loadJournalsFromFirebase(uid),
-        loadProjectTagsFromFirebase(uid),
-        loadWeeklySummariesFromFirebase(uid)
+        loadJournalsFromFirebase(currentUser.uid),
+        loadProjectTagsFromFirebase(currentUser.uid),
+        loadWeeklySummariesFromFirebase(currentUser.uid)
       ])
 
       // Migrate old format journals if needed
@@ -871,6 +888,14 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
     )
   }
 
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Login onSignInSuccess={(user) => {
+      // Auth state will update automatically via onAuthStateChanged
+      console.log('User signed in:', user)
+    }} />
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
@@ -931,7 +956,23 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
             >
               Weekly Summaries
             </button>
+            <button
+              onClick={() => setView('settings')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                view === 'settings'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Settings
+            </button>
           </div>
+          {/* User info */}
+          {user && (
+            <div className="mt-4 text-sm text-gray-600">
+              <span>Signed in as: <strong>{user.email || 'Anonymous'}</strong></span>
+            </div>
+          )}
         </div>
 
         {/* Journal Entry View */}
@@ -1523,6 +1564,11 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
               </div>
             )}
           </div>
+        )}
+
+        {/* Settings View */}
+        {view === 'settings' && (
+          <Settings onClose={() => setView('journal')} userId={userId} />
         )}
 
         {/* Footer Info */}

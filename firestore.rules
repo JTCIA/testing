@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function: Check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper function: Check if user is an admin
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+
+    // Helper function: Check if email is in allowlist
+    function isAllowlisted() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/allowlist/$(request.auth.token.email));
+    }
+
+    // Allowlist collection - read-only for all authenticated users, write-only for admins
+    match /allowlist/{email} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // User data - only the owner can read/write their own data
+    match /users/{userId} {
+      // Main user document
+      allow read, write: if isOwner(userId) && isAllowlisted();
+
+      // User's nested data (journals, tags, summaries)
+      match /data/{document=**} {
+        allow read, write: if isOwner(userId) && isAllowlisted();
+      }
+    }
+
+    // Email logs - write-only for Cloud Functions, read for admins
+    match /emailLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only Cloud Functions can write
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
