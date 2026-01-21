@@ -17,10 +17,6 @@ initializeApp();
 const db = getFirestore();
 const auth = getAuth();
 
-if (SENDGRID_API_KEY) {
-  sgMail.setApiKey(SENDGRID_API_KEY);
-}
-
 /**
  * Blocking function that runs before a user is created via email link
  * Checks if the email is in the allowlist
@@ -160,33 +156,40 @@ export const toggleEmailReminders = onCall(async (request) => {
  * Send email reminder to a user
  */
 async function sendReminderEmail(email, name) {
-  if (!SENDGRID_API_KEY) {
+  const apiKey = SENDGRID_API_KEY.value();
+  const senderEmail = SENDER_EMAIL.value();
+  const appUrl = APP_URL.value();
+
+  if (!apiKey) {
     console.error('SendGrid API key not configured');
     return false;
   }
 
+  // Initialize SendGrid with the API key
+  sgMail.setApiKey(apiKey);
+
   const msg = {
     to: email,
     from: {
-      email: SENDER_EMAIL,
+      email: senderEmail,
       name: 'Productivity Journal'
     },
     subject: 'Daily Journal Reminder',
-    text: `Hi ${name || 'there'}!\n\nThis is your daily reminder to fill out your productivity journal.\n\nClick here to open your journal: ${APP_URL}\n\nHave a productive day!\n\n---\nTo unsubscribe from these reminders, visit: ${APP_URL}/settings`,
+    text: `Hi ${name || 'there'}!\n\nThis is your daily reminder to fill out your productivity journal.\n\nClick here to open your journal: ${appUrl}\n\nHave a productive day!\n\n---\nTo unsubscribe from these reminders, visit: ${appUrl}/settings`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #4F46E5;">Daily Journal Reminder</h2>
         <p>Hi ${name || 'there'}!</p>
         <p>This is your daily reminder to fill out your productivity journal.</p>
         <p style="margin: 30px 0;">
-          <a href="${APP_URL}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          <a href="${appUrl}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             Open Your Journal
           </a>
         </p>
         <p>Have a productive day!</p>
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #E5E7EB;">
         <p style="font-size: 12px; color: #6B7280;">
-          To unsubscribe from these reminders, visit your <a href="${APP_URL}/settings" style="color: #4F46E5;">settings</a>.
+          To unsubscribe from these reminders, visit your <a href="${appUrl}/settings" style="color: #4F46E5;">settings</a>.
         </p>
       </div>
     `
@@ -332,6 +335,7 @@ export const unsubscribe = onRequest(async (req, res) => {
       }, { merge: true });
     }
 
+    const appUrl = APP_URL.value();
     res.status(200).send(`
       <html>
         <head><title>Unsubscribed</title></head>
@@ -339,7 +343,7 @@ export const unsubscribe = onRequest(async (req, res) => {
           <h1 style="color: #4F46E5;">Unsubscribed Successfully</h1>
           <p>You have been unsubscribed from daily journal reminders for <strong>${email}</strong>.</p>
           <p>You can re-enable reminders anytime from your journal settings.</p>
-          <p><a href="${APP_URL}" style="color: #4F46E5;">Return to Journal</a></p>
+          <p><a href="${appUrl}" style="color: #4F46E5;">Return to Journal</a></p>
         </body>
       </html>
     `);
