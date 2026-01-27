@@ -13,6 +13,7 @@ import {
 } from './firebase'
 import Login from './components/Login'
 import Settings from './components/Settings'
+import YouTubeRecipeExtractor from './components/YouTubeRecipeExtractor'
 
 // Three tag buckets
 const DOMAIN_TAGS = [
@@ -284,7 +285,7 @@ const ItemEditor = ({
 }
 
 function App() {
-  const [view, setView] = useState('journal') // 'journal', 'search', 'recap', 'manage-tags', 'summaries', 'settings'
+  const [view, setView] = useState('journal') // 'journal', 'search', 'recap', 'manage-tags', 'summaries', 'settings', 'recipe-extractor'
   const [journals, setJournals] = useState([])
   const [projectTags, setProjectTags] = useState([]) // User-created project tags
   const [weeklySummaries, setWeeklySummaries] = useState([]) // Saved weekly summaries
@@ -957,6 +958,16 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
               Weekly Summaries
             </button>
             <button
+              onClick={() => setView('recipe-extractor')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                view === 'recipe-extractor'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-orange-100 text-orange-800 hover:bg-orange-200'
+              }`}
+            >
+              BBQ Recipe Extractor
+            </button>
+            <button
               onClick={() => setView('settings')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 view === 'settings'
@@ -1569,6 +1580,11 @@ ${Object.keys(projectTagFrequency).length > 0 ? Object.entries(projectTagFrequen
         {/* Settings View */}
         {view === 'settings' && (
           <Settings onClose={() => setView('journal')} userId={userId} />
+        )}
+
+        {/* Recipe Extractor View */}
+        {view === 'recipe-extractor' && (
+          <YouTubeRecipeExtractor onClose={() => setView('journal')} />
         )}
 
         {/* Footer Info */}
