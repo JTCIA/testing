@@ -97,11 +97,8 @@
     return false;
   };
 
-  if (checkSession()) {
-    showContent();
-  } else {
-    showGate();
-  }
+  // Cloudflare Access handles auth in production; always show content.
+  showContent();
 })();
 </script>
 {{ end }}
