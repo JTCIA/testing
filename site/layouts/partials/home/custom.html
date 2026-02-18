@@ -1,0 +1,135 @@
+{{/* Custom Homepage — Audit Analytics */}}
+
+{{/* ── Hero ────────────────────────────────────────────────────────────────── */}}
+<div class="aa-hero">
+  <div class="aa-hero__inner">
+    <p class="aa-hero__eyebrow">Audit Analytics</p>
+    <h1 class="aa-hero__name">JT Erwin</h1>
+    <div class="aa-hero__accent-bar"></div>
+    <p class="aa-hero__tagline">
+      I think about how to make <strong>audit analytics</strong> credible, scalable, and actually useful.
+      I write about what I'm learning—on methodology, capability building, and what separates
+      analytics that hold up under scrutiny from analytics that don't.
+    </p>
+    <div class="aa-hero__cta">
+      <a href="/articles/" class="aa-btn aa-btn--primary">Read the Articles</a>
+      <a href="/about/" class="aa-btn aa-btn--ghost">About</a>
+    </div>
+  </div>
+</div>
+
+{{/* ── Latest Articles ──────────────────────────────────────────────────────── */}}
+<div class="aa-section">
+  <div class="aa-section__header">
+    <h2 class="aa-section__title">Recent Writing</h2>
+    <a href="/articles/" class="aa-section__more">All articles →</a>
+  </div>
+
+  <div class="aa-articles">
+    {{ $articles := where .Site.RegularPages "Section" "articles" }}
+    {{ $articles = where $articles "Draft" false }}
+    {{ range first 5 $articles }}
+    <a href="{{ .RelPermalink }}" class="aa-article-card">
+      <div>
+        <div class="aa-article-card__title">{{ .Title }}</div>
+        {{ with .Summary }}
+        <div class="aa-article-card__excerpt">{{ . | truncate 140 }}</div>
+        {{ end }}
+        <div class="aa-article-card__meta">
+          {{ with .Params.tags }}
+            {{ range first 2 . }}
+            <span class="aa-reading-item__tag">{{ . }}</span>
+            {{ end }}
+          {{ end }}
+        </div>
+      </div>
+      <div class="aa-article-card__date">
+        {{ .Date.Format "Jan 2006" }}
+      </div>
+    </a>
+    {{ else }}
+    <p style="color: var(--aa-mid); font-size: 0.9rem;">Articles coming soon.</p>
+    {{ end }}
+  </div>
+</div>
+
+{{/* ── Reading List ─────────────────────────────────────────────────────────── */}}
+<div class="aa-section">
+  <div class="aa-section__header">
+    <h2 class="aa-section__title">What I'm Reading</h2>
+    <a href="/reading/" class="aa-section__more">Full reading list →</a>
+  </div>
+
+  <div class="aa-reading-list">
+    {{ $reading := where .Site.RegularPages "Section" "reading" }}
+    {{ $reading = where $reading "Draft" false }}
+    {{ range first 6 $reading }}
+    <div class="aa-reading-item">
+      {{ $itemTitle := .Title }}
+      {{ with .Params.external_url }}
+      <a href="{{ . }}" target="_blank" rel="noopener noreferrer" class="aa-reading-item__link">{{ $itemTitle }}</a>
+      {{ else }}
+      <a href="{{ .RelPermalink }}" class="aa-reading-item__link">{{ $itemTitle }}</a>
+      {{ end }}
+      <div class="aa-reading-item__source">
+        {{ with .Params.source }}{{ . }}{{ end }}
+        {{ with .Params.author }} · {{ . }}{{ end }}
+      </div>
+      {{ with .Params.commentary }}
+      <div class="aa-reading-item__commentary">{{ . }}</div>
+      {{ end }}
+      <div class="aa-reading-item__footer">
+        <span class="aa-reading-item__date">{{ .Date.Format "Jan 2, 2006" }}</span>
+        {{ with .Params.tags }}{{ range first 2 . }}
+        <span class="aa-reading-item__tag">{{ . }}</span>
+        {{ end }}{{ end }}
+      </div>
+    </div>
+    {{ else }}
+    <p style="color: var(--aa-mid); font-size: 0.9rem;">Reading list entries coming soon.</p>
+    {{ end }}
+  </div>
+</div>
+
+{{/* ── About Preview / Connect ──────────────────────────────────────────────── */}}
+<div class="aa-section">
+  <div class="aa-section__header">
+    <h2 class="aa-section__title">About</h2>
+    <a href="/about/" class="aa-section__more">Full bio →</a>
+  </div>
+
+  <div class="aa-about-preview">
+    <div class="aa-about-preview__text">
+      <p>
+        Senior internal audit leader at a large regulated financial institution.
+        I focus on making analytics work in practice—not just in pilots.
+        That means building credible methodologies, upskilling teams, and earning
+        regulatory confidence in what we build.
+      </p>
+      <p style="margin-top: 0.75rem;">
+        I write to figure out what I think. Occasionally I get it right.
+      </p>
+    </div>
+    <div class="aa-about-preview__connect">
+      <a href="https://linkedin.com/in/jterwin" target="_blank" rel="noopener noreferrer" class="aa-connect-link">
+        <svg class="aa-connect-link__icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+        LinkedIn
+      </a>
+      <a href="mailto:jt@audit-analytics.com" class="aa-connect-link">
+        <svg class="aa-connect-link__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        Email
+      </a>
+      <a href="/feed.xml" class="aa-connect-link">
+        <svg class="aa-connect-link__icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.18 15.64a2.18 2.18 0 012.18 2.18C8.36 19.01 7.38 20 6.18 20 4.98 20 4 19.01 4 17.82a2.18 2.18 0 012.18-2.18M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"/>
+        </svg>
+        RSS Feed
+      </a>
+    </div>
+  </div>
+</div>

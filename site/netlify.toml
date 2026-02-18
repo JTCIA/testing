@@ -1,0 +1,10 @@
+# Cloudflare Pages uses the same wrangler.toml, but many teams also keep
+# a netlify.toml as a fallback. The real config is in wrangler.toml below.
+# You can delete this file if deploying exclusively to Cloudflare Pages.
+
+[build]
+  command = "hugo --minify"
+  publish = "public"
+
+[build.environment]
+  HUGO_VERSION = "0.145.0"

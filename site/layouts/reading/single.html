@@ -1,0 +1,40 @@
+{{ define "main" }}
+<article class="prose dark:prose-invert max-w-prose">
+  <h1 class="mt-6">{{ .Title }}</h1>
+
+  <div class="not-prose mb-6 pb-6 border-b border-neutral-200 dark:border-neutral-700">
+    {{ with .Params.external_url }}
+    <a href="{{ . }}" target="_blank" rel="noopener noreferrer"
+       style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.9rem;font-weight:600;color:var(--aa-teal);text-decoration:none;margin-bottom:0.5rem;">
+      Read the original article ↗
+    </a>
+    <br>
+    {{ end }}
+    <span style="font-size:0.8rem;color:rgb(var(--color-neutral-400));">
+      {{ with .Params.source }}{{ . }}{{ end }}
+      {{ with .Params.author }} &middot; {{ . }}{{ end }}
+      &middot; Added {{ .Date.Format "January 2, 2006" }}
+    </span>
+    {{ with .Params.tags }}
+    <div style="margin-top:0.5rem;">
+      {{ range . }}<span class="aa-reading-item__tag" style="margin-right:0.3rem;">{{ . }}</span>{{ end }}
+    </div>
+    {{ end }}
+  </div>
+
+  {{ with .Params.commentary }}
+  <blockquote>
+    <p><strong>Why I'm reading this:</strong></p>
+    <p>{{ . }}</p>
+  </blockquote>
+  {{ end }}
+
+  {{ .Content }}
+</article>
+
+<div class="mt-10 pt-6 border-t border-neutral-200 dark:border-neutral-700">
+  <a href="/reading/" style="font-size:0.85rem;color:var(--aa-mid);text-decoration:none;">
+    ← Back to Reading List
+  </a>
+</div>
+{{ end }}

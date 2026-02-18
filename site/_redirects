@@ -1,0 +1,6 @@
+# Cloudflare Pages redirects
+# www → apex (non-www)
+https://www.audit-analytics.com/* https://audit-analytics.com/:splat 301!
+
+# Common legacy URL patterns (add as needed)
+# /blog/*  /articles/:splat  301

@@ -1,0 +1,87 @@
+{{ define "main" }}
+<div id="journal-gate" style="display:none">
+  <div style="max-width:400px;margin:5rem auto;text-align:center;padding:2rem;border:1.5px solid #FCD34D;border-radius:12px;background:#FFFBEB;">
+    <div class="journal-private-badge" style="justify-content:center;margin-bottom:1.5rem;">
+      &#128274; PRIVATE — Personal Journal
+    </div>
+    <p style="font-size:0.9rem;color:#78350F;margin-bottom:1.5rem;">
+      This section is not public. Enter the journal passphrase to continue.
+    </p>
+    <form id="journal-auth-form" onsubmit="return checkJournalPassword(event)">
+      <input
+        type="password"
+        id="journal-password"
+        placeholder="Passphrase"
+        autocomplete="current-password"
+        style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #FCD34D;border-radius:6px;font-size:0.95rem;margin-bottom:0.75rem;box-sizing:border-box;"
+      >
+      <button type="submit"
+        style="width:100%;padding:0.6rem;background:#006D77;color:#fff;border:none;border-radius:6px;font-size:0.9rem;font-weight:600;cursor:pointer;">
+        Enter Journal
+      </button>
+    </form>
+    <p id="journal-error" style="display:none;color:#DC2626;font-size:0.8rem;margin-top:0.5rem;">
+      Incorrect passphrase.
+    </p>
+  </div>
+</div>
+
+<div id="journal-content" style="display:none">
+  <div class="journal-private-notice">
+    <strong>&#128274; Private — Personal Journal</strong>
+    This section is not public and is excluded from search engines.
+    <a href="/journal/" style="color:#92400E;text-decoration:underline;">← All entries</a>
+  </div>
+
+  <article class="prose dark:prose-invert max-w-prose">
+    <h1>{{ .Title }}</h1>
+    <p class="text-sm text-neutral-400 mb-6">
+      {{ .Date.Format "Monday, January 2, 2006" }}
+      {{ with .Params.tags }}
+        &nbsp;·&nbsp;
+        {{ range . }}<span class="aa-reading-item__tag">{{ . }}</span> {{ end }}
+      {{ end }}
+    </p>
+    {{ .Content }}
+  </article>
+</div>
+
+<script>
+(function() {
+  var SESSION_KEY = 'journal_auth';
+
+  function checkSession() {
+    return sessionStorage.getItem(SESSION_KEY) === 'granted';
+  }
+
+  function showContent() {
+    document.getElementById('journal-gate').style.display = 'none';
+    document.getElementById('journal-content').style.display = 'block';
+    sessionStorage.setItem(SESSION_KEY, 'granted');
+  }
+
+  function showGate() {
+    document.getElementById('journal-gate').style.display = 'block';
+    document.getElementById('journal-content').style.display = 'none';
+  }
+
+  window.checkJournalPassword = function(e) {
+    e.preventDefault();
+    var pw = document.getElementById('journal-password').value;
+    var stored = localStorage.getItem('journal_pw_hash');
+    if (pw && (pw === window.__JOURNAL_PW__ || (stored && btoa(pw) === stored))) {
+      showContent();
+    } else {
+      document.getElementById('journal-error').style.display = 'block';
+    }
+    return false;
+  };
+
+  if (checkSession()) {
+    showContent();
+  } else {
+    showGate();
+  }
+})();
+</script>
+{{ end }}
