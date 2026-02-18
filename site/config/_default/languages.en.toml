@@ -1,0 +1,19 @@
+disabled = false
+languageCode = "en-US"
+languageName = "English"
+weight = 1
+
+[params]
+  displayName = "EN"
+  isoCode = "en"
+  rtl = false
+
+[params.author]
+  name = "JT Erwin"
+  headline = "Audit Analytics | Internal Audit Leader"
+  bio = "I think about how to make audit analytics credible, scalable, and actually useful. I write about what I'm learning."
+  links = [
+    { linkedin = "https://linkedin.com/in/jterwin" },
+    { email = "mailto:jt@audit-analytics.com" },
+    { rss = "/feed.xml" }
+  ]

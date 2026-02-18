@@ -1,0 +1,28 @@
+# Cloudflare Pages _headers file
+# Place this file in the root of your Hugo project (alongside hugo.toml)
+# Hugo will copy it to /public/_headers on build.
+
+# Global security headers
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Cache static assets aggressively
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Never cache HTML
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Never index journal — belt-and-suspenders beyond robots.txt
+/journal/*
+  X-Robots-Tag: noindex, nofollow

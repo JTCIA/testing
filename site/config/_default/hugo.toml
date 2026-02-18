@@ -1,0 +1,46 @@
+baseURL = "https://audit-analytics.com/"
+languageCode = "en-us"
+defaultContentLanguage = "en"
+title = "Audit Analytics"
+theme = "blowfish"
+
+enableRobotsTXT = true
+summaryLength = 30
+enableEmoji = false
+
+buildDrafts = false
+buildFuture = false
+
+[pagination]
+  pagerSize = 10
+
+[imaging]
+  anchor = "Center"
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+
+[sitemap]
+  changefreq = "weekly"
+  filename = "sitemap.xml"
+  priority = 0.5
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+  section = ["HTML", "RSS"]
+  page = ["HTML"]
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.highlight]
+    style = "nord"
+    lineNos = false
+    noClasses = false
+    tabWidth = 2
+
+[security]
+  [security.funcs]
+    getenv = ["^HUGO_", "^CI$"]

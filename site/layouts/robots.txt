@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /journal/
+Disallow: /journal
+
+Allow: /
+
+Sitemap: {{ .Site.BaseURL }}sitemap.xml
