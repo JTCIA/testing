@@ -44,7 +44,62 @@
     </p>
     {{ .Content }}
   </article>
+
+  <div class="journal-publish-bar">
+    <button class="journal-publish-btn" id="publish-btn">↑ Publish to Blog</button>
+  </div>
 </div>
+
+{{/* Publish-to-Blog Modal */}}
+<div id="publish-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;">
+  <div id="publish-overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);"></div>
+  <div class="publish-modal__box">
+    <div class="publish-modal__header">
+      <h3 class="publish-modal__title">Publish to Blog</h3>
+      <button class="publish-modal__close" id="publish-close">✕</button>
+    </div>
+    <p class="publish-modal__hint">
+      Copy this, save as <code>content/articles/{{ .Date.Format "2006-01-02" }}-{{ .File.ContentBaseName }}.md</code>, then commit and push.
+    </p>
+    <pre class="publish-modal__pre" id="publish-content">---
+title: "{{ .Title }}"
+date: {{ .Date.Format "2006-01-02" }}
+draft: false
+description: ""
+summary: ""
+tags: {{ .Params.tags | jsonify }}
+---
+
+{{ .RawContent }}</pre>
+    <div class="publish-modal__actions">
+      <button class="publish-modal__copy" id="publish-copy">Copy to Clipboard</button>
+      <span class="publish-modal__copied" id="publish-copied" style="display:none;">Copied!</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var modal = document.getElementById('publish-modal');
+  document.getElementById('publish-btn').addEventListener('click', function() {
+    modal.style.display = 'block';
+  });
+  document.getElementById('publish-close').addEventListener('click', function() {
+    modal.style.display = 'none';
+  });
+  document.getElementById('publish-overlay').addEventListener('click', function() {
+    modal.style.display = 'none';
+  });
+  document.getElementById('publish-copy').addEventListener('click', function() {
+    var text = document.getElementById('publish-content').textContent;
+    navigator.clipboard.writeText(text).then(function() {
+      var copied = document.getElementById('publish-copied');
+      copied.style.display = 'inline';
+      setTimeout(function() { copied.style.display = 'none'; }, 2000);
+    });
+  });
+})();
+</script>
 
 <script>
 (function() {
