@@ -1,6 +1,8 @@
 User-agent: *
 Disallow: /journal/
 Disallow: /journal
+Disallow: /admin/
+Disallow: /admin
 
 Allow: /
 

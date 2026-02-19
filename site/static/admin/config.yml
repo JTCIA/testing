@@ -1,0 +1,176 @@
+# Decap CMS configuration for audit-analytics.com
+# Repo: JTCI/audit-analytics  |  Branch: main
+#
+# After deploying the Cloudflare Worker (see cloudflare-worker/oauth.js),
+# replace YOUR_WORKER_NAME.YOUR_SUBDOMAIN with your actual worker subdomain.
+
+backend:
+  name: github
+  repo: JTCI/audit-analytics
+  branch: main
+  base_url: https://YOUR_WORKER_NAME.YOUR_SUBDOMAIN.workers.dev
+  # ^^^^ Replace this with your deployed worker URL once it's live.
+  # Example: https://decap-oauth.jterwin.workers.dev
+
+# Media files — uploaded images land in static/images/uploads
+# and are served at /images/uploads/<filename>
+media_folder: site/static/images/uploads
+public_folder: /images/uploads
+
+collections:
+  # -----------------------------------------------------------------------
+  # Articles
+  # -----------------------------------------------------------------------
+  - name: articles
+    label: Articles
+    label_singular: Article
+    folder: site/content/articles
+    create: true
+    slug: "{{slug}}"
+    preview_path: "articles/{{slug}}"
+    fields:
+      - label: Title
+        name: title
+        widget: string
+        required: true
+      - label: Date
+        name: date
+        widget: datetime
+        format: "YYYY-MM-DD"
+        date_format: "YYYY-MM-DD"
+        time_format: false
+        default: ""
+      - label: Draft
+        name: draft
+        widget: boolean
+        default: false
+        hint: "When true, this post will NOT appear on the live site."
+      - label: Description
+        name: description
+        widget: string
+        required: false
+        hint: "Short description used in meta tags and link previews."
+      - label: Summary
+        name: summary
+        widget: string
+        required: false
+        hint: "One-sentence teaser shown in article listings."
+      - label: Tags
+        name: tags
+        widget: list
+        required: false
+        field:
+          label: Tag
+          name: tag
+          widget: string
+      - label: Body
+        name: body
+        widget: markdown
+
+  # -----------------------------------------------------------------------
+  # Journal
+  # Journal entries are private: robots noindex + excluded from sitemap.
+  # The hidden fields below mirror the archetype so every CMS-created entry
+  # gets the same privacy flags automatically.
+  # -----------------------------------------------------------------------
+  - name: journal
+    label: Journal
+    label_singular: Journal Entry
+    folder: site/content/journal
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    # No preview_path — journal is not publicly linked
+    fields:
+      - label: Title
+        name: title
+        widget: string
+        required: true
+      - label: Date
+        name: date
+        widget: datetime
+        format: "YYYY-MM-DD"
+        date_format: "YYYY-MM-DD"
+        time_format: false
+        default: ""
+      - label: Draft
+        name: draft
+        widget: boolean
+        default: false
+      # Privacy fields — set automatically, hidden from the editor UI
+      - label: Robots
+        name: robots
+        widget: hidden
+        default: "noindex, nofollow"
+      - label: Sitemap Disable
+        name: sitemap
+        widget: hidden
+        default: {disable: true}
+      - label: Private
+        name: private
+        widget: hidden
+        default: true
+      - label: Body
+        name: body
+        widget: markdown
+
+  # -----------------------------------------------------------------------
+  # Reading
+  # Each entry is a book/article annotation. The key field is "commentary"
+  # (what the archetype and existing content use), not "description".
+  # -----------------------------------------------------------------------
+  - name: reading
+    label: Reading
+    label_singular: Reading Entry
+    folder: site/content/reading
+    create: true
+    slug: "{{slug}}"
+    preview_path: "reading/{{slug}}"
+    fields:
+      - label: Title
+        name: title
+        widget: string
+        required: true
+        hint: "Book or article title."
+      - label: Date
+        name: date
+        widget: datetime
+        format: "YYYY-MM-DD"
+        date_format: "YYYY-MM-DD"
+        time_format: false
+        default: ""
+      - label: Draft
+        name: draft
+        widget: boolean
+        default: false
+      - label: External URL
+        name: external_url
+        widget: string
+        required: false
+        hint: "Link to the original article, paper, or book page."
+      - label: Source / Publication
+        name: source
+        widget: string
+        required: false
+        hint: "e.g. Harvard Business Review, IIA UK"
+      - label: Author
+        name: author
+        widget: string
+        required: false
+      - label: Tags
+        name: tags
+        widget: list
+        required: false
+        field:
+          label: Tag
+          name: tag
+          widget: string
+      - label: Commentary
+        name: commentary
+        widget: text
+        required: false
+        hint: "Your notes on why this is worth reading."
+      - label: Body
+        name: body
+        widget: markdown
+        required: false
+        hint: "Extended notes (optional — commentary above is usually enough)."
