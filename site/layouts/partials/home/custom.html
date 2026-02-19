@@ -18,77 +18,77 @@
   </div>
 </div>
 
-{{/* ── Latest Articles ──────────────────────────────────────────────────────── */}}
-<div class="aa-section">
-  <div class="aa-section__header">
-    <h2 class="aa-section__title">Recent Writing</h2>
-    <a href="/articles/" class="aa-section__more">All articles →</a>
-  </div>
+{{/* ── Articles + Reading Sidebar ────────────────────────────────────────── */}}
+<div class="aa-content-layout">
 
-  <div class="aa-articles">
-    {{ $articles := where .Site.RegularPages "Section" "articles" }}
-    {{ $articles = where $articles "Draft" false }}
-    {{ range first 5 $articles }}
-    <a href="{{ .RelPermalink }}" class="aa-article-card">
-      <div>
-        <div class="aa-article-card__title">{{ .Title }}</div>
-        {{ with .Summary }}
-        <div class="aa-article-card__excerpt">{{ . | truncate 140 }}</div>
-        {{ end }}
-        <div class="aa-article-card__meta">
-          {{ with .Params.tags }}
-            {{ range first 2 . }}
-            <span class="aa-reading-item__tag">{{ . }}</span>
-            {{ end }}
+  {{/* Main column: Latest Articles */}}
+  <div class="aa-content-main">
+    <div class="aa-section__header">
+      <h2 class="aa-section__title">Recent Writing</h2>
+      <a href="/articles/" class="aa-section__more">All articles →</a>
+    </div>
+
+    <div class="aa-articles">
+      {{ $articles := where .Site.RegularPages "Section" "articles" }}
+      {{ $articles = where $articles "Draft" false }}
+      {{ range first 5 $articles }}
+      <a href="{{ .RelPermalink }}" class="aa-article-card">
+        <div>
+          <div class="aa-article-card__title">{{ .Title }}</div>
+          {{ with .Summary }}
+          <div class="aa-article-card__excerpt">{{ . | truncate 140 }}</div>
           {{ end }}
+          <div class="aa-article-card__meta">
+            {{ with .Params.tags }}
+              {{ range first 2 . }}
+              <span class="aa-reading-item__tag">{{ . }}</span>
+              {{ end }}
+            {{ end }}
+          </div>
         </div>
-      </div>
-      <div class="aa-article-card__date">
-        {{ .Date.Format "Jan 2006" }}
-      </div>
-    </a>
-    {{ else }}
-    <p style="color: var(--aa-mid); font-size: 0.9rem;">Articles coming soon.</p>
-    {{ end }}
-  </div>
-</div>
-
-{{/* ── Reading List ─────────────────────────────────────────────────────────── */}}
-<div class="aa-section">
-  <div class="aa-section__header">
-    <h2 class="aa-section__title">What I'm Reading</h2>
-    <a href="/reading/" class="aa-section__more">Full reading list →</a>
+        <div class="aa-article-card__date">
+          {{ .Date.Format "Jan 2006" }}
+        </div>
+      </a>
+      {{ else }}
+      <p style="color: var(--aa-mid); font-size: 0.9rem;">Articles coming soon.</p>
+      {{ end }}
+    </div>
   </div>
 
-  <div class="aa-reading-list">
+  {{/* Sidebar: What I'm Reading */}}
+  <aside class="aa-content-sidebar">
+    <div class="aa-sidebar-header">
+      <span class="aa-section__title">What I'm Reading</span>
+      <a href="/reading/" class="aa-section__more">All →</a>
+    </div>
+
     {{ $reading := where .Site.RegularPages "Section" "reading" }}
     {{ $reading = where $reading "Draft" false }}
-    {{ range first 6 $reading }}
-    <div class="aa-reading-item">
+    {{ range first 5 $reading }}
+    <div class="aa-sidebar-item">
       {{ $itemTitle := .Title }}
       {{ with .Params.external_url }}
-      <a href="{{ . }}" target="_blank" rel="noopener noreferrer" class="aa-reading-item__link">{{ $itemTitle }}</a>
+      <a href="{{ . }}" target="_blank" rel="noopener noreferrer" class="aa-sidebar-item__link">{{ $itemTitle }}</a>
       {{ else }}
-      <a href="{{ .RelPermalink }}" class="aa-reading-item__link">{{ $itemTitle }}</a>
+      <a href="{{ .RelPermalink }}" class="aa-sidebar-item__link">{{ $itemTitle }}</a>
       {{ end }}
       <div class="aa-reading-item__source">
         {{ with .Params.source }}{{ . }}{{ end }}
         {{ with .Params.author }} · {{ . }}{{ end }}
       </div>
-      {{ with .Params.commentary }}
-      <div class="aa-reading-item__commentary">{{ . }}</div>
-      {{ end }}
       <div class="aa-reading-item__footer">
         <span class="aa-reading-item__date">{{ .Date.Format "Jan 2, 2006" }}</span>
-        {{ with .Params.tags }}{{ range first 2 . }}
+        {{ with .Params.tags }}{{ range first 1 . }}
         <span class="aa-reading-item__tag">{{ . }}</span>
         {{ end }}{{ end }}
       </div>
     </div>
     {{ else }}
-    <p style="color: var(--aa-mid); font-size: 0.9rem;">Reading list entries coming soon.</p>
+    <p style="color: var(--aa-mid); font-size: 0.9rem;">Reading list coming soon.</p>
     {{ end }}
-  </div>
+  </aside>
+
 </div>
 
 {{/* ── About Preview / Connect ──────────────────────────────────────────────── */}}

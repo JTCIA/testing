@@ -527,6 +527,240 @@ article.prose h2 {
   }
 }
 
+/* --- Content Layout (Articles + Reading Sidebar) -------------------------- */
+
+.aa-content-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0 3rem;
+  padding: 2.5rem 0;
+  border-bottom: 1px solid var(--aa-border);
+  align-items: start;
+}
+
+.dark .aa-content-layout {
+  border-color: rgb(var(--color-neutral-800));
+}
+
+@media (max-width: 768px) {
+  .aa-content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .aa-content-sidebar {
+    border-top: 1px solid var(--aa-border);
+    padding-top: 2rem;
+    margin-top: 0.5rem;
+  }
+
+  .dark .aa-content-sidebar {
+    border-top-color: rgb(var(--color-neutral-800));
+  }
+}
+
+.aa-content-sidebar {
+  position: sticky;
+  top: 2rem;
+}
+
+.aa-sidebar-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--aa-border);
+}
+
+.dark .aa-sidebar-header {
+  border-color: rgb(var(--color-neutral-700));
+}
+
+.aa-sidebar-item {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--aa-border);
+}
+
+.dark .aa-sidebar-item {
+  border-color: rgb(var(--color-neutral-800));
+}
+
+.aa-sidebar-item:last-child {
+  border-bottom: none;
+}
+
+.aa-sidebar-item__link {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--aa-charcoal);
+  text-decoration: none;
+  margin-bottom: 0.2rem;
+  transition: color 0.15s;
+}
+
+.dark .aa-sidebar-item__link {
+  color: rgb(var(--color-neutral-100));
+}
+
+.aa-sidebar-item__link:hover {
+  color: var(--aa-teal);
+  text-decoration: none;
+}
+
+.aa-sidebar-item__link::after {
+  content: " ↗";
+  font-size: 0.75em;
+  opacity: 0.5;
+}
+
+/* --- Journal Publish Bar -------------------------------------------------- */
+
+.journal-publish-bar {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #FCD34D;
+  text-align: right;
+}
+
+.journal-publish-btn {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--aa-teal);
+  background: var(--aa-teal-pale);
+  border: 1.5px solid var(--aa-teal);
+  border-radius: 6px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.journal-publish-btn:hover {
+  background: var(--aa-teal);
+  color: #fff;
+}
+
+/* --- Publish Modal -------------------------------------------------------- */
+
+.publish-modal__box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 620px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.dark .publish-modal__box {
+  background: rgb(var(--color-neutral-900));
+  border: 1px solid rgb(var(--color-neutral-700));
+}
+
+.publish-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.publish-modal__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--aa-charcoal);
+  margin: 0;
+}
+
+.dark .publish-modal__title {
+  color: rgb(var(--color-neutral-100));
+}
+
+.publish-modal__close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--aa-mid);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.publish-modal__close:hover {
+  background: var(--aa-bg-soft);
+}
+
+.publish-modal__hint {
+  font-size: 0.85rem;
+  color: var(--aa-mid);
+  margin-bottom: 1rem;
+  line-height: 1.55;
+}
+
+.publish-modal__hint code {
+  font-size: 0.8rem;
+  background: var(--aa-bg-soft);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  color: var(--aa-teal);
+}
+
+.publish-modal__pre {
+  font-size: 0.78rem;
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1.55;
+  background: var(--aa-bg-soft);
+  border: 1px solid var(--aa-border);
+  border-radius: 6px;
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--aa-charcoal);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.dark .publish-modal__pre {
+  background: rgb(var(--color-neutral-800));
+  color: rgb(var(--color-neutral-200));
+  border-color: rgb(var(--color-neutral-700));
+}
+
+.publish-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.publish-modal__copy {
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--aa-teal);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.publish-modal__copy:hover {
+  background: #005860;
+}
+
+.publish-modal__copied {
+  font-size: 0.85rem;
+  color: var(--aa-teal);
+  font-weight: 600;
+}
+
 /* --- Print ---------------------------------------------------------------- */
 
 @media print {
