@@ -1,12 +1,12 @@
 # Decap CMS configuration for audit-analytics.com
-# Repo: JTCI/audit-analytics  |  Branch: main
+# Repo: JTCIA/audit-analytics  |  Branch: main
 #
 # After deploying the Cloudflare Worker (see cloudflare-worker/oauth.js),
 # replace YOUR_WORKER_NAME.YOUR_SUBDOMAIN with your actual worker subdomain.
 
 backend:
   name: github
-  repo: JTCI/audit-analytics
+  repo: JTCIA/audit-analytics
   branch: main
   base_url: https://YOUR_WORKER_NAME.YOUR_SUBDOMAIN.workers.dev
   # ^^^^ Replace this with your deployed worker URL once it's live.
