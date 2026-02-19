@@ -3,35 +3,27 @@ title: "About"
 description: "JT Erwin — Senior Internal Audit leader specializing in data analytics, audit quality, and capability building."
 ---
 
-I'm a senior internal audit leader at a large regulated financial institution. My work sits at the intersection of analytics, audit methodology, and organizational capability—figuring out how to make data-driven audit work in practice, not just in PowerPoints.
+I’m a senior internal audit leader at a large regulated financial institution. My work sits at the intersection of analytics, audit methodology, quality assurance, and team development. 
 
-That means dealing with real constraints: regulatory scrutiny, data access limitations, teams with uneven technical skills, and leadership expectations that don't always match what the data can actually say. I find that gap interesting.
+In practical terms, that means building systems that help audit functions think clearly, prioritize risk intelligently, and stand up to scrutiny when it matters most.
 
 ## What I Focus On
 
-**Audit Planning Analytics**
-Using data to make risk assessment more rigorous and defensible. Not just automated scores—actual analytical frameworks that can survive a regulator asking "how did you decide to audit this?"
+I spend most of my professional energy trying to close the gap between what looks good in a strategy presentation and what actually works inside a regulated environment. Data is messy. Teams have uneven skill sets. Regulators ask fair but uncomfortable questions. Leaders want faster answers. That tension is not a nuisance to me. It is the interesting part.
 
-**Continuous Monitoring and Risk Sensing**
-Building monitoring programs that provide real signal, not just noise. The hard part isn't the technology; it's defining what you're actually looking for and why.
+A lot of my work involves designing risk assessment frameworks that can survive the question “why this audit and why now,” building analytics that can be explained line by line to an examiner, and shaping methodology that holds up under review. I care deeply about documentation discipline, review standards, governance, and knowing when the evidence is not strong enough to draw a conclusion. In regulated audit work, credibility compounds and shortcuts eventually surface.
 
-**Control Testing Automation**
-Automating substantive testing in ways that are explainable, reproducible, and audit-ready. If you can't explain the logic to an examiner, it doesn't count.
+I also oversee audit methodology and quality. That is less about writing procedures and more about defining what quality actually means for a modern internal audit function. Is it clean documentation. Is it issue severity discipline. Is it root cause clarity. Is it consistency across teams. In reality, it is all of those, but the harder work is building shared standards and accountability so that quality is not dependent on individual heroics.
 
-**Audit Methodology and Quality**
-The unglamorous work of making sure the analytical process itself is sound. Documentation, review, version control, and the discipline to say "we don't have enough data to conclude that."
-
-**Skills Assessment and Capability Building**
-Assessing where audit teams actually are analytically (not where they think they are) and building training and hiring strategies that close the real gaps.
-
-**Analytics Governance**
-Policies, standards, and review processes that allow analytics to scale without becoming a liability. Particularly important in regulated environments where the analytics themselves can become exam topics.
+Beyond process, I spend significant time thinking about capability. What skills do modern auditors actually need. Where are we overconfident. Where are we underdeveloped. How do you build analytical rigor without overwhelming people. How do you create space for curiosity while maintaining discipline. Those are leadership questions as much as technical ones.
 
 ## A Guiding Principle
 
-Analytics in internal audit have to be **credible, explainable, and defensible under regulatory scrutiny**. That's a higher bar than most analytics contexts. It shapes everything—methodology choices, documentation standards, how we communicate findings, and which tools we use.
+Outside of work, curiosity is still the through line. I am constantly tinkering with something. Sometimes that means building a small application to test an idea. Sometimes it means redesigning a workflow just to see if it can be simpler. Sometimes it is diving into a book series, a game economy, a historical question, or a new way to think about leadership. I like understanding how systems behave under pressure, whether that system is a bank, a team, a financial model, or a fictional world.
 
-It also means I'm skeptical of hype. A lot of "AI in audit" conversation is solution-looking-for-a-problem. I try to write about what actually works and why.
+I am also a husband and a dad, which is the best forcing function for humility I know. Kids ask better questions than most executives. They also remind you quickly when your explanation makes no sense. That perspective keeps me grounded.
+
+I am skeptical of hype, particularly around technology. Artificial intelligence in audit is interesting, but most conversations skip the difficult parts. Data governance, review rigor, skill gaps, accountability, and documentation are less exciting topics. They are also the difference between sustainable capability and a flashy experiment.
 
 ## This Site
 
